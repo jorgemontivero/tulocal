@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,6 +17,13 @@ type ShopPageProps = {
   params: Promise<{ slug: string }>;
 };
 
+function shortMetaDescription(description: string | null): string {
+  if (!description) {
+    return "Descubre productos y servicios de este comercio en tulocal.com.ar.";
+  }
+  return description.length > 150 ? `${description.slice(0, 150).trim()}...` : description;
+}
+
 function toWhatsAppUrl(whatsappNumber: string): string {
   return `https://wa.me/${whatsappNumber.replace(/\D/g, "")}`;
 }
@@ -26,6 +34,57 @@ function formatARS(price: number): string {
     currency: "ARS",
     maximumFractionDigits: 0,
   }).format(price);
+}
+
+export async function generateMetadata(
+  { params }: ShopPageProps,
+  _parent: ResolvingMetadata,
+): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+
+  const { data: shop } = await supabase
+    .from("shops")
+    .select("name,description,logo_url,slug")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (!shop) {
+    return {
+      title: "No encontrado | tulocal.com.ar",
+      description: "El comercio que buscas no esta disponible.",
+      openGraph: {
+        title: "No encontrado | tulocal.com.ar",
+        description: "El comercio que buscas no esta disponible.",
+        url: `/${slug}`,
+      },
+      twitter: {
+        card: "summary",
+        title: "No encontrado | tulocal.com.ar",
+        description: "El comercio que buscas no esta disponible.",
+      },
+    };
+  }
+
+  const title = `${shop.name} | tulocal.com.ar`;
+  const description = shortMetaDescription(shop.description);
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `/${shop.slug}`,
+      images: shop.logo_url ? [{ url: shop.logo_url }] : [],
+    },
+    twitter: {
+      card: shop.logo_url ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: shop.logo_url ? [shop.logo_url] : undefined,
+    },
+  };
 }
 
 export default async function ShopCatalogPage({ params }: ShopPageProps) {

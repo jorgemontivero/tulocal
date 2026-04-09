@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { LayoutDashboard, MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,26 @@ import {
 } from "@/components/ui/card";
 import { SearchBar } from "@/components/search-bar";
 import { createClient } from "@/utils/supabase/server";
+
+export const metadata: Metadata = {
+  title: "tulocal.com.ar | Directorio comercial de Catamarca",
+  description:
+    "Encuentra comercios, productos y servicios locales en Catamarca. Potenciando el comercio local.",
+  openGraph: {
+    title: "tulocal.com.ar | Directorio comercial de Catamarca",
+    description:
+      "Encuentra comercios, productos y servicios locales en Catamarca. Potenciando el comercio local.",
+    url: "/",
+    siteName: "tulocal.com.ar",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "tulocal.com.ar | Directorio comercial de Catamarca",
+    description:
+      "Encuentra comercios, productos y servicios locales en Catamarca. Potenciando el comercio local.",
+  },
+};
 
 function shortDescription(description: string | null): string {
   if (!description) return "Comercio local de Catamarca.";
