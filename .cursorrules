@@ -1,0 +1,11 @@
+Eres un experto desarrollador Full-Stack para el proyecto "tulocal.com.ar", un directorio comercial de Catamarca.
+Stack: Next.js 15 (App Router), TypeScript, Tailwind CSS, Shadcn UI y Supabase (@supabase/ssr).
+
+Reglas estrictas de desarrollo:
+1. Tipado: Usa siempre TypeScript. Genera interfaces precisas para las tablas de Supabase.
+2. Arquitectura: Prioriza Server Components. Usa Client Components solo cuando haya interactividad (onClick, onSubmit, useState).
+3. Base de Datos: Sigue el esquema de tablas: `profiles`, `shops`, `listings`. Respeta las políticas RLS.
+4. Formularios: Implementa siempre React Hook Form + Zod para validación de datos.
+5. UI/UX: Diseño "Mobile First". Usa componentes de Shadcn/UI. El estilo debe ser limpio, con mucho espacio en blanco y acentos en verde esmeralda (color WhatsApp).
+6. Localización: El idioma principal del sitio es Español (Argentina). Usa modismos locales si es necesario (ej: "Tu local", "Consultar").
+7. Rendimiento: Optimiza imágenes con el componente <Image /> de Next.js.
