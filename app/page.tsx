@@ -1,5 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Poppins } from "next/font/google";
 import { LayoutDashboard, MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +15,13 @@ import {
 } from "@/components/ui/card";
 import { SearchBar } from "@/components/search-bar";
 import { createClient } from "@/utils/supabase/server";
+
+const brandSans = Poppins({
+  subsets: ["latin"],
+  weight: ["800"],
+  style: ["italic"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "tulocal.com.ar | Directorio comercial de Catamarca",
@@ -79,48 +88,75 @@ export default async function Home({ searchParams }: HomePageProps) {
   const hasSingleShop = hasShops && shops.length === 1;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-zinc-900">
-      <header className="border-b border-zinc-200 bg-white/95">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-slate-900">
-            tulocal.com.ar
-          </Link>
-          {user ? (
-            <Button
-              render={<Link href="/dashboard" />}
-              className="bg-emerald-600 text-white hover:bg-emerald-700"
+    <div className="flex min-h-screen flex-col text-zinc-900">
+      <header className="border-b border-emerald-950/30 bg-emerald-800 text-white shadow-sm">
+        <div className="mx-auto w-full max-w-7xl px-3 py-3 sm:px-4 sm:py-4">
+          <div className="flex flex-row flex-nowrap items-center justify-between gap-2">
+            <Link
+              href="/"
+              className="flex shrink-0 items-center gap-2 sm:gap-3"
             >
-              <LayoutDashboard />
-              Mi Panel
-            </Button>
-          ) : (
-            <Button
-              render={<Link href="/login" />}
-              className="bg-emerald-600 text-white hover:bg-emerald-700"
-            >
-              Acceso Vendedores
-            </Button>
-          )}
+              <Image
+                src="/logo-tulocal.png"
+                alt=""
+                width={220}
+                height={56}
+                className="h-9 w-auto object-contain drop-shadow sm:h-14"
+                priority
+              />
+              <span
+                className={`${brandSans.className} hidden text-2xl font-extrabold italic tracking-tight text-white sm:block`}
+              >
+                Tu Local
+              </span>
+            </Link>
+
+            <div className="mx-1 flex min-w-0 flex-1 justify-center sm:mx-2">
+              <div className="w-full min-w-[120px] max-w-lg">
+                <SearchBar variant="compact" className="w-full" />
+              </div>
+            </div>
+
+            <div className="shrink-0">
+              {user ? (
+                <Button
+                  render={<Link href="/dashboard" />}
+                  className="border border-white/20 bg-white px-2 text-emerald-800 shadow-sm hover:bg-emerald-50 sm:px-4"
+                >
+                  <LayoutDashboard className="text-emerald-800" />
+                  Mi Panel
+                </Button>
+              ) : (
+                <Button
+                  render={<Link href="/login" />}
+                  className="border border-white/20 bg-white px-2 text-emerald-800 shadow-sm hover:bg-emerald-50 sm:px-4"
+                >
+                  Acceso Vendedores
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </header>
 
-      <main>
-        <section className="border-b border-zinc-200">
-          <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:py-14">
-            <h1 className="max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">
-              Encontrá lo que buscás en Catamarca
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm text-zinc-600 sm:text-base">
-              Descubrí comercios, servicios y oportunidades cerca tuyo.
-            </p>
-            <SearchBar />
-          </div>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6 sm:py-6">
+        <section className="mb-6 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+          <h1 className="max-w-2xl text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
+            Encontrá lo que buscás en Catamarca
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm text-zinc-600 sm:text-base">
+            Descubrí comercios, servicios y oportunidades cerca tuyo.
+          </p>
         </section>
 
-        <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:py-12">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Comercios destacados</h2>
-            <Badge className="bg-emerald-100 text-emerald-700">Catamarca</Badge>
+        <section className="mb-6 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-zinc-900">
+              Comercios destacados
+            </h2>
+            <Badge className="shrink-0 bg-emerald-100 text-emerald-800">
+              Catamarca
+            </Badge>
           </div>
 
           {error ? (
@@ -136,7 +172,10 @@ export default async function Home({ searchParams }: HomePageProps) {
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-4">
                 {shops.map((shop) => (
-                  <Card key={shop.id} className="h-full border border-zinc-200 bg-white">
+                  <Card
+                    key={shop.id}
+                    className="h-full border border-zinc-200 bg-white shadow-sm"
+                  >
                     <CardHeader>
                       <div className="mb-2 flex items-center gap-3">
                         <Avatar className="size-10">
@@ -211,20 +250,20 @@ export default async function Home({ searchParams }: HomePageProps) {
         </section>
       </main>
 
-      <footer className="border-t border-zinc-200 bg-white">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-zinc-600 sm:flex-row sm:items-center sm:justify-between">
+      <footer className="mt-auto border-t border-emerald-950/30 bg-emerald-800 text-white">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-8">
           <nav className="flex flex-wrap gap-4">
-            <a className="hover:text-emerald-600" href="#">
+            <a className="text-white/90 hover:text-white" href="#">
               Inicio
             </a>
-            <a className="hover:text-emerald-600" href="#">
+            <a className="text-white/90 hover:text-white" href="#">
               Comercios
             </a>
-            <a className="hover:text-emerald-600" href="#">
+            <a className="text-white/90 hover:text-white" href="#">
               Contacto
             </a>
           </nav>
-          <p>Potenciando el comercio local</p>
+          <p className="text-white/90">Potenciando el comercio local</p>
         </div>
       </footer>
     </div>

@@ -4,8 +4,14 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
-export function SearchBar() {
+export type SearchBarProps = {
+  variant?: "default" | "compact";
+  className?: string;
+};
+
+export function SearchBar({ variant = "default", className }: SearchBarProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -46,10 +52,20 @@ export function SearchBar() {
   }, [debouncedValue, qParam, pathname, router, searchParams]);
 
   return (
-    <div className="relative mt-6 max-w-xl">
+    <div
+      className={cn(
+        "relative w-full",
+        variant === "default" && "mt-6 max-w-xl",
+        variant === "compact" && "mt-0",
+        className,
+      )}
+    >
       <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-500" />
       <Input
-        className="h-11 bg-white pl-9"
+        className={cn(
+          "bg-white pl-9",
+          variant === "compact" ? "h-10 text-sm" : "h-11",
+        )}
         placeholder="Buscar comercios, rubros o productos"
         aria-label="Buscar comercios"
         value={value}
