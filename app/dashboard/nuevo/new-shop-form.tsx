@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Poppins } from "next/font/google";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,36 +26,77 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createShop } from "@/app/dashboard/actions";
+import { cn } from "@/lib/utils";
 
-const schema = z.object({
-  name: z.string().min(2, "Ingresa un nombre valido."),
-  category: z.string().min(1, "Selecciona un rubro."),
-  whatsapp: z.string().min(6, "Ingresa un WhatsApp valido."),
-  description: z
-    .string()
-    .min(10, "La descripcion debe tener al menos 10 caracteres.")
-    .max(220, "La descripcion no puede superar 220 caracteres."),
+const brandSans = Poppins({
+  subsets: ["latin"],
+  weight: ["800"],
+  style: ["italic"],
+  display: "swap",
 });
 
-type FormValues = z.infer<typeof schema>;
+export const RUBRO_OTRO_ESPECIFICAR = "Otro, especificar";
 
-const categories = [
+export const CATEGORIAS_PREDEFINIDAS = [
   "Gastronomia",
   "Moda",
   "Hogar",
   "Tecnologia",
   "Salud y Belleza",
   "Servicios",
-];
+] as const;
+
+const CATEGORIAS_SELECT = [...CATEGORIAS_PREDEFINIDAS, RUBRO_OTRO_ESPECIFICAR];
+
+function initialCategoryFields(stored: string | null | undefined) {
+  const c = stored?.trim() ?? "";
+  if (!c) return { category: "", categoryCustom: "" };
+  if ((CATEGORIAS_PREDEFINIDAS as readonly string[]).includes(c)) {
+    return { category: c, categoryCustom: "" };
+  }
+  return { category: RUBRO_OTRO_ESPECIFICAR, categoryCustom: c };
+}
+
+const schema = z
+  .object({
+    name: z.string().min(2, "Ingresa un nombre valido."),
+    category: z.string().min(1, "Selecciona un rubro."),
+    categoryCustom: z.string().optional(),
+    whatsapp: z.string().min(6, "Ingresa un WhatsApp valido."),
+    instagram: z.string().max(100, "Instagram: maximo 100 caracteres."),
+    description: z
+      .string()
+      .min(10, "La descripcion debe tener al menos 10 caracteres.")
+      .max(220, "La descripcion no puede superar 220 caracteres."),
+  })
+  .superRefine((data, ctx) => {
+    if (data.category === RUBRO_OTRO_ESPECIFICAR) {
+      const t = (data.categoryCustom ?? "").trim();
+      if (t.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Especifica el rubro con al menos 2 caracteres.",
+          path: ["categoryCustom"],
+        });
+      }
+    }
+  });
+
+type FormValues = z.infer<typeof schema>;
+
 const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024;
 
-type InitialValues = Partial<FormValues>;
+type InitialFieldValues = Partial<
+  Pick<FormValues, "name" | "whatsapp" | "description" | "instagram">
+>;
 
 export function NewShopForm({
+  initialCategory = "",
   initialValues,
   initialLogoUrl,
 }: {
-  initialValues?: InitialValues;
+  initialCategory?: string | null;
+  initialValues?: InitialFieldValues;
   initialLogoUrl?: string;
 }) {
   const router = useRouter();
@@ -62,15 +105,22 @@ export function NewShopForm({
   const [isPending, startTransition] = useTransition();
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
 
+  const rubroInicial = initialCategoryFields(initialCategory);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: initialValues?.name ?? "",
-      category: initialValues?.category ?? "",
+      category: rubroInicial.category,
+      categoryCustom: rubroInicial.categoryCustom,
       whatsapp: initialValues?.whatsapp ?? "",
+      instagram: initialValues?.instagram ?? "",
       description: initialValues?.description ?? "",
     },
   });
+
+  const categoryWatch = form.watch("category");
+  const showCategoryCustom = categoryWatch === RUBRO_OTRO_ESPECIFICAR;
 
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
@@ -81,11 +131,17 @@ export function NewShopForm({
       return;
     }
 
+    const resolvedCategory =
+      values.category === RUBRO_OTRO_ESPECIFICAR
+        ? (values.categoryCustom ?? "").trim()
+        : values.category;
+
     startTransition(async () => {
       const formData = new FormData();
       formData.set("name", values.name);
-      formData.set("category", values.category);
+      formData.set("category", resolvedCategory);
       formData.set("whatsapp", values.whatsapp);
+      formData.set("instagram", values.instagram.trim());
       formData.set("description", values.description);
       if (selectedLogo) formData.set("logo", selectedLogo);
 
@@ -100,9 +156,24 @@ export function NewShopForm({
 
   return (
     <Card className="w-full border border-zinc-200 bg-white shadow-sm">
-      <CardHeader>
-        <Link href="/" className="text-sm font-semibold text-slate-900 hover:text-emerald-700">
-          tulocal.com.ar
+      <CardHeader className="space-y-2">
+        <Link
+          href="/"
+          className="mb-1 flex items-center gap-3 rounded-lg outline-offset-4 hover:opacity-90"
+        >
+          <Image
+            src="/logo-tulocal.png"
+            alt=""
+            width={200}
+            height={48}
+            className="h-10 w-auto object-contain"
+            priority
+          />
+          <span
+            className={`${brandSans.className} text-2xl font-extrabold italic tracking-tight text-slate-900`}
+          >
+            Tu Local
+          </span>
         </Link>
         <CardTitle className="text-2xl text-slate-900">Configurar mi Local</CardTitle>
         <CardDescription className="text-slate-700">
@@ -134,7 +205,7 @@ export function NewShopForm({
                     <SelectValue placeholder="Selecciona un rubro" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
+                    {CATEGORIAS_SELECT.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}
                       </SelectItem>
@@ -148,6 +219,25 @@ export function NewShopForm({
             )}
           </div>
 
+          {showCategoryCustom && (
+            <div className="space-y-1.5">
+              <label htmlFor="category-custom" className="text-sm font-semibold text-slate-900">
+                Especifica el rubro
+              </label>
+              <Input
+                id="category-custom"
+                type="text"
+                placeholder="Ej: Servicio Técnico de Drones"
+                {...form.register("categoryCustom")}
+              />
+              {form.formState.errors.categoryCustom && (
+                <p className="text-xs text-red-600">
+                  {form.formState.errors.categoryCustom.message}
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-slate-900">WhatsApp</label>
             <Input
@@ -157,6 +247,36 @@ export function NewShopForm({
             />
             {form.formState.errors.whatsapp && (
               <p className="text-xs text-red-600">{form.formState.errors.whatsapp.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="instagram-username" className="text-sm font-semibold text-slate-900">
+              Instagram <span className="font-normal text-zinc-500">(opcional)</span>
+            </label>
+            <div
+              className={cn(
+                "flex overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm",
+                "focus-within:ring-2 focus-within:ring-emerald-600/30 focus-within:ring-offset-0",
+              )}
+            >
+              <span
+                className="flex shrink-0 items-center border-r border-zinc-200 bg-slate-100 px-2 py-2 text-[10px] leading-tight text-zinc-600 sm:px-3 sm:text-xs"
+                aria-hidden
+              >
+                https://www.instagram.com/
+              </span>
+              <Input
+                id="instagram-username"
+                type="text"
+                placeholder="tu_usuario"
+                autoComplete="off"
+                className="min-w-0 flex-1 rounded-none border-0 bg-transparent px-3 py-2 shadow-none focus-visible:ring-0"
+                {...form.register("instagram")}
+              />
+            </div>
+            {form.formState.errors.instagram && (
+              <p className="text-xs text-red-600">{form.formState.errors.instagram.message}</p>
             )}
           </div>
 

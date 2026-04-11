@@ -83,7 +83,7 @@ export function CatalogManager({ listings }: { listings: ListingItem[] }) {
   return (
     <Card className="border border-zinc-200 bg-white shadow-sm">
       <CardHeader>
-        <CardTitle className="text-slate-900">Mi Catalogo</CardTitle>
+        <CardTitle className="text-xl font-bold text-slate-900">Mi Catalogo</CardTitle>
         <CardDescription className="text-slate-700">
           Agrega productos o servicios para mostrar en tu pagina publica.
         </CardDescription>
@@ -91,8 +91,11 @@ export function CatalogManager({ listings }: { listings: ListingItem[] }) {
       <CardContent className="space-y-6">
         <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2">
-            <label className="text-sm font-semibold text-slate-900">Titulo</label>
-            <Input placeholder="Ej: Asesoria financiera mensual" {...form.register("title")} />
+            <label className="text-sm font-semibold text-slate-900">Producto/Servicio</label>
+            <Input
+              placeholder="Ej: poncho, dulces regionales, pantalón, etc..."
+              {...form.register("title")}
+            />
             {form.formState.errors.title && (
               <p className="text-xs text-red-600">{form.formState.errors.title.message}</p>
             )}

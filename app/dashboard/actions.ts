@@ -7,6 +7,7 @@ const newShopSchema = z.object({
   name: z.string().min(2, "Ingresa un nombre valido."),
   category: z.string().min(1, "Selecciona un rubro."),
   whatsapp: z.string().min(6, "Ingresa un WhatsApp valido."),
+  instagram: z.string().max(100, "Instagram: maximo 100 caracteres."),
   description: z
     .string()
     .min(10, "La descripcion debe tener al menos 10 caracteres.")
@@ -58,6 +59,7 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     name: formData.get("name"),
     category: formData.get("category"),
     whatsapp: formData.get("whatsapp"),
+    instagram: String(formData.get("instagram") ?? ""),
     description: formData.get("description"),
   });
 
@@ -104,12 +106,17 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     logoUrl = publicData.publicUrl;
   }
 
+  const instagramUsername =
+    parsed.data.instagram?.trim().replace(/^@/, "") ?? "";
+  const instagram_username = instagramUsername === "" ? null : instagramUsername;
+
   const payload = {
     vendor_id: user.id,
     name: parsed.data.name,
     slug,
     category: parsed.data.category,
     whatsapp_number: parsed.data.whatsapp,
+    instagram_username,
     description: parsed.data.description,
     logo_url: logoUrl,
   };
@@ -118,7 +125,19 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     ? supabase.from("shops").update(payload).eq("id", existingShop.id)
     : supabase.from("shops").insert(payload);
 
-  const { error } = await writeQuery;
+  let { error } = await writeQuery;
+
+  if (
+    error?.message.includes("instagram_username") &&
+    "instagram_username" in payload
+  ) {
+    const { instagram_username: _omit, ...withoutInstagram } = payload;
+    const retryQuery = existingShop
+      ? supabase.from("shops").update(withoutInstagram).eq("id", existingShop.id)
+      : supabase.from("shops").insert(withoutInstagram);
+    const second = await retryQuery;
+    error = second.error;
+  }
 
   if (!error) {
     return { ok: true };

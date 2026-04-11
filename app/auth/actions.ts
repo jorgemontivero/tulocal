@@ -1,22 +1,15 @@
 "use server";
 
-import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
-
-const authSchema = z.object({
-  email: z.email("Ingresa un email valido."),
-  password: z
-    .string()
-    .min(6, "La contrasena debe tener al menos 6 caracteres."),
-});
+import { signInSchema, signUpSchema } from "@/lib/auth-schemas";
 
 export type AuthActionState = {
   error?: string;
   success?: string;
 };
 
-export async function signIn(input: z.infer<typeof authSchema>): Promise<AuthActionState> {
-  const parsed = authSchema.safeParse(input);
+export async function signIn(input: unknown): Promise<AuthActionState> {
+  const parsed = signInSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos invalidos." };
   }
@@ -31,14 +24,26 @@ export async function signIn(input: z.infer<typeof authSchema>): Promise<AuthAct
   return { success: "Sesion iniciada." };
 }
 
-export async function signUp(input: z.infer<typeof authSchema>): Promise<AuthActionState> {
-  const parsed = authSchema.safeParse(input);
+export async function signUp(input: unknown): Promise<AuthActionState> {
+  const parsed = signUpSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos invalidos." };
   }
 
+  const { nombre, apellido, celular, email, password } = parsed.data;
+
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp(parsed.data);
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        nombre,
+        apellido,
+        celular,
+      },
+    },
+  });
 
   if (error) {
     return { error: "No pudimos registrar tu cuenta. Proba nuevamente." };

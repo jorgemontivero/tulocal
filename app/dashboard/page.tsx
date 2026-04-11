@@ -1,5 +1,7 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Poppins } from "next/font/google";
 import {
   Card,
   CardContent,
@@ -12,6 +14,23 @@ import { Button } from "@/components/ui/button";
 import { CatalogManager } from "@/app/dashboard/catalog-manager";
 import { signOut } from "@/app/auth/actions";
 import { createClient } from "@/utils/supabase/server";
+
+const brandSans = Poppins({
+  subsets: ["latin"],
+  weight: ["800"],
+  style: ["italic"],
+  display: "swap",
+});
+
+function saludoNombreUsuario(user: {
+  email?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+}): string {
+  const nombre = String(user.user_metadata?.nombre ?? "").trim();
+  const apellido = String(user.user_metadata?.apellido ?? "").trim();
+  const armado = [nombre, apellido].filter(Boolean).join(" ");
+  return armado || user.email || "Usuario";
+}
 
 type DashboardPageProps = {
   searchParams: Promise<{ success?: string }>;
@@ -50,12 +69,30 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-xl space-y-4">
         <Card className="border border-zinc-200 bg-white shadow-sm">
-          <CardHeader>
-            <Link href="/" className="text-sm font-semibold text-slate-900 hover:text-emerald-700">
-              tulocal.com.ar
+          <CardHeader className="space-y-2">
+            <Link
+              href="/"
+              className="mb-1 flex items-center gap-3 rounded-lg outline-offset-4 hover:opacity-90"
+            >
+              <Image
+                src="/logo-tulocal.png"
+                alt=""
+                width={200}
+                height={48}
+                className="h-10 w-auto object-contain"
+              />
+              <span
+                className={`${brandSans.className} text-2xl font-extrabold italic tracking-tight text-slate-900`}
+              >
+                Tu Local
+              </span>
             </Link>
-            <CardTitle className="text-2xl text-slate-900">Bienvenido, {user.email}</CardTitle>
-            <CardDescription className="text-slate-700">Gestiona tu presencia en tulocal.com.ar.</CardDescription>
+            <CardTitle className="text-2xl text-slate-900">
+              Bienvenido, {saludoNombreUsuario(user)}
+            </CardTitle>
+            <CardDescription className="text-slate-700">
+              Gestiona tu presencia en tulocal.com.ar.
+            </CardDescription>
           </CardHeader>
         </Card>
 
@@ -90,7 +127,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <div className="space-y-4">
             <Card className="border border-zinc-200 bg-white shadow-sm">
               <CardHeader>
-                <CardTitle className="text-slate-900">Resumen de tu local</CardTitle>
+                <CardTitle className="text-xl font-bold text-slate-900">
+                  Resumen de tu local
+                </CardTitle>
                 <CardDescription className="text-slate-700">Datos visibles para potenciales clientes.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">

@@ -22,6 +22,7 @@ export default async function NewShopPage() {
         name?: string | null;
         category?: string | null;
         whatsapp_number?: string | null;
+        instagram_username?: string | null;
         description?: string | null;
         logo_url?: string | null;
       }
@@ -31,10 +32,11 @@ export default async function NewShopPage() {
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-xl">
         <NewShopForm
+          initialCategory={shopData?.category ?? ""}
           initialValues={{
             name: shopData?.name ?? "",
-            category: shopData?.category ?? "",
             whatsapp: shopData?.whatsapp_number ?? "",
+            instagram: shopData?.instagram_username ?? "",
             description: shopData?.description ?? "",
           }}
           initialLogoUrl={shopData?.logo_url ?? undefined}
