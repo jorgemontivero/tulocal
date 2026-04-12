@@ -117,7 +117,7 @@ export function SearchBar({
             "bg-white pl-9 pr-28",
             variant === "compact" ? "h-10 text-sm" : "h-14 rounded-xl text-base sm:text-lg",
           )}
-          placeholder="Buscar comercios, rubros o productos"
+          placeholder="Buscar comercios o productos"
           aria-label="Buscar comercios"
           name="q"
           value={value}
@@ -146,7 +146,7 @@ export function SearchBar({
       <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-500" />
       <Input
         className={debounceInputClassName}
-        placeholder="Buscar comercios, rubros o productos"
+        placeholder="Buscar comercios o productos"
         aria-label="Buscar comercios"
         name="q"
         value={value}

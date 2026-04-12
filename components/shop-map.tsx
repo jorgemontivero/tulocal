@@ -2,8 +2,6 @@
 
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -18,6 +16,7 @@ export type MapShop = {
   slug: string;
   logo_url: string | null;
   category_id: string | null;
+  subcategory_id: string | null;
   address: string | null;
   latitude: number;
   longitude: number;
@@ -28,9 +27,16 @@ export type MapCategory = {
   name: string;
 };
 
+export type MapSubcategory = {
+  id: string;
+  name: string;
+  category_id: string;
+};
+
 type ShopMapProps = {
   shops: MapShop[];
   categories: MapCategory[];
+  subcategories: MapSubcategory[];
 };
 
 const CATAMARCA_CENTER: [number, number] = [-28.4696, -65.7852];
@@ -45,16 +51,28 @@ const LeafletMap = dynamic(() => import("@/components/leaflet-map"), {
   ),
 });
 
-export function ShopMap({ shops, categories }: ShopMapProps) {
+export function ShopMap({ shops, categories, subcategories }: ShopMapProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("all");
 
-  const filteredShops = useMemo(
+  const subcategoriesForCategory = useMemo(
     () =>
       selectedCategory === "all"
-        ? shops
-        : shops.filter((s) => s.category_id === selectedCategory),
-    [shops, selectedCategory],
+        ? []
+        : subcategories.filter((s) => s.category_id === selectedCategory),
+    [subcategories, selectedCategory],
   );
+
+  const filteredShops = useMemo(() => {
+    let result = shops;
+    if (selectedCategory !== "all") {
+      result = result.filter((s) => s.category_id === selectedCategory);
+    }
+    if (selectedSubcategory !== "all") {
+      result = result.filter((s) => s.subcategory_id === selectedSubcategory);
+    }
+    return result;
+  }, [shops, selectedCategory, selectedSubcategory]);
 
   const selectedCategoryName =
     selectedCategory === "all"
@@ -62,24 +80,59 @@ export function ShopMap({ shops, categories }: ShopMapProps) {
       : categories.find((c) => c.id === selectedCategory)?.name ??
         "Todas las categorías";
 
+  const selectedSubcategoryName =
+    selectedSubcategory === "all"
+      ? "Todas las subcategorías"
+      : subcategoriesForCategory.find((s) => s.id === selectedSubcategory)
+          ?.name ?? "Todas las subcategorías";
+
+  function handleCategoryChange(v: string | null) {
+    setSelectedCategory(v ?? "all");
+    setSelectedSubcategory("all");
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="w-full max-w-xs">
-          <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v ?? "all")}>
-            <SelectTrigger className="border-zinc-300 bg-white">
-              <SelectValue>{selectedCategoryName}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las categorías</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>
-                  {cat.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="w-full sm:w-56">
+            <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+              <SelectTrigger className="border-zinc-300 bg-white">
+                <SelectValue>{selectedCategoryName}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las categorías</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {subcategoriesForCategory.length > 0 && (
+            <div className="w-full sm:w-56">
+              <Select
+                value={selectedSubcategory}
+                onValueChange={(v) => setSelectedSubcategory(v ?? "all")}
+              >
+                <SelectTrigger className="border-zinc-300 bg-white">
+                  <SelectValue>{selectedSubcategoryName}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las subcategorías</SelectItem>
+                  {subcategoriesForCategory.map((sub) => (
+                    <SelectItem key={sub.id} value={sub.id}>
+                      {sub.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
+
         <p className="text-sm text-zinc-500">
           {filteredShops.length}{" "}
           {filteredShops.length === 1 ? "local encontrado" : "locales encontrados"}

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/utils/supabase/server";
-import { ShopMap, type MapShop, type MapCategory } from "@/components/shop-map";
+import { ShopMap, type MapShop, type MapCategory, type MapSubcategory } from "@/components/shop-map";
 import { SiteFooter } from "@/components/site-footer";
 
 export const metadata: Metadata = {
@@ -20,16 +20,20 @@ export const metadata: Metadata = {
 export default async function MapaPage() {
   const supabase = await createClient();
 
-  const [shopsRes, categoriesRes] = await Promise.all([
+  const [shopsRes, categoriesRes, subcategoriesRes] = await Promise.all([
     supabase
       .from("shops")
-      .select("id,name,slug,logo_url,category_id,address,latitude,longitude")
+      .select("id,name,slug,logo_url,category_id,subcategory_id,address,latitude,longitude")
       .not("latitude", "is", null)
       .not("longitude", "is", null)
       .order("name"),
     supabase
       .from("categories")
       .select("id,name")
+      .order("name"),
+    supabase
+      .from("subcategories")
+      .select("id,name,category_id")
       .order("name"),
   ]);
 
@@ -40,6 +44,7 @@ export default async function MapaPage() {
       slug: s.slug,
       logo_url: s.logo_url,
       category_id: s.category_id,
+      subcategory_id: s.subcategory_id,
       address: s.address,
       latitude: s.latitude!,
       longitude: s.longitude!,
@@ -47,6 +52,13 @@ export default async function MapaPage() {
 
   const categories: MapCategory[] =
     categoriesRes.data?.map((c) => ({ id: c.id, name: c.name })) ?? [];
+
+  const subcategories: MapSubcategory[] =
+    subcategoriesRes.data?.map((s) => ({
+      id: s.id,
+      name: s.name,
+      category_id: s.category_id,
+    })) ?? [];
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
@@ -60,7 +72,7 @@ export default async function MapaPage() {
           </p>
         </div>
 
-        <ShopMap shops={shops} categories={categories} />
+        <ShopMap shops={shops} categories={categories} subcategories={subcategories} />
       </main>
       <SiteFooter />
     </div>

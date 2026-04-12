@@ -9,8 +9,8 @@ export function SiteFooter() {
             <Link className="text-white/90 hover:text-white" href="/">
               Inicio
             </Link>
-            <Link className="text-white/90 hover:text-white" href="/#comercios">
-              Comercios
+            <Link className="text-white/90 hover:text-white" href="/precios">
+              Precios
             </Link>
             <Link className="text-white/90 hover:text-white" href="/nosotros">
               Nosotros
