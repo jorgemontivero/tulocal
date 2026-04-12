@@ -35,7 +35,8 @@ function WhatsAppIcon({ className }: { className?: string }) {
 
 export default function ContactoPage() {
   return (
-    <main className="min-h-screen bg-slate-50 px-4 pb-16 pt-6">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-zinc-900">
+      <main className="flex-1 px-4 pb-16 pt-6">
       <div className="mx-auto mt-10 max-w-4xl rounded-2xl bg-white p-6 shadow-sm md:p-8">
         <Link
           href="/"
@@ -102,6 +103,27 @@ export default function ContactoPage() {
           </section>
         </div>
       </div>
-    </main>
+      </main>
+
+      <footer className="mt-auto border-t border-emerald-950/30 bg-emerald-800 text-white">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-8">
+          <nav className="flex flex-wrap items-center gap-4">
+            <Link className="text-white/90 hover:text-white" href="/">
+              Inicio
+            </Link>
+            <Link className="text-white/90 hover:text-white" href="/#comercios">
+              Comercios
+            </Link>
+            <Link className="text-white/90 hover:text-white" href="/nosotros">
+              Nosotros
+            </Link>
+            <Link className="text-white/90 hover:text-white" href="/contacto">
+              Contacto
+            </Link>
+          </nav>
+          <p className="text-white/90">Potenciando el comercio local</p>
+        </div>
+      </footer>
+    </div>
   );
 }
