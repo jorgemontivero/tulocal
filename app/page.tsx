@@ -117,7 +117,13 @@ export default async function Home({ searchParams }: HomePageProps) {
               </div>
             </div>
 
-            <div className="shrink-0">
+            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+              <Link
+                href="/contacto"
+                className="whitespace-nowrap text-sm font-medium text-white/90 underline-offset-4 hover:text-white hover:underline"
+              >
+                Contacto
+              </Link>
               {user ? (
                 <Button
                   render={<Link href="/dashboard" />}
@@ -149,7 +155,10 @@ export default async function Home({ searchParams }: HomePageProps) {
           </p>
         </section>
 
-        <section className="mb-6 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
+        <section
+          id="comercios"
+          className="mb-6 scroll-mt-24 rounded-2xl bg-white p-4 shadow-sm sm:p-6"
+        >
           <div className="mb-6 flex items-center justify-between gap-3">
             <h2 className="text-xl font-semibold text-zinc-900">
               Comercios destacados
@@ -253,15 +262,15 @@ export default async function Home({ searchParams }: HomePageProps) {
       <footer className="mt-auto border-t border-emerald-950/30 bg-emerald-800 text-white">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-8">
           <nav className="flex flex-wrap gap-4">
-            <a className="text-white/90 hover:text-white" href="#">
+            <Link className="text-white/90 hover:text-white" href="/">
               Inicio
-            </a>
-            <a className="text-white/90 hover:text-white" href="#">
+            </Link>
+            <Link className="text-white/90 hover:text-white" href="/#comercios">
               Comercios
-            </a>
-            <a className="text-white/90 hover:text-white" href="#">
+            </Link>
+            <Link className="text-white/90 hover:text-white" href="/contacto">
               Contacto
-            </a>
+            </Link>
           </nav>
           <p className="text-white/90">Potenciando el comercio local</p>
         </div>
