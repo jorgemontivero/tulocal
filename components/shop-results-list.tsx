@@ -5,14 +5,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { SearchListingCard } from "@/components/search-listing-card";
 import { createClient } from "@/utils/supabase/server";
-import { ShopCard, type ShopCardShop } from "@/components/shop-card";
+import { type ShopCardShop } from "@/components/shop-card";
+import { ShopGridLoadMore } from "@/components/shop-grid-load-more";
+import { ListingGridLoadMore } from "@/components/listing-grid-load-more";
+import type { SearchListing } from "@/app/actions/load-more-listings";
+import { PAGE_SIZE, LISTINGS_PAGE_SIZE } from "@/lib/constants";
 import type { Json } from "@/lib/database.types";
-
-const RESULT_LIMIT_FILTERED = 48;
-const RESULT_LIMIT_DEFAULT = 24;
-const LISTINGS_FETCH_CAP = 120;
 
 function isUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -134,60 +133,53 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
 
   let shopRows: unknown[] | null = null;
   let shopError: { message: string } | null = null;
-  let listingRowsForUi: Array<{
-    id: string;
-    title: string;
-    description: string | null;
-    price: number | null;
-    discount_percentage: number | null;
-    image_urls: Json;
-    shop_id: string;
-    shops: unknown;
-  }> = [];
+  let searchListings: SearchListing[] = [];
+  let hasMoreListings = false;
+
+  const listingsOversample = LISTINGS_PAGE_SIZE * 3;
 
   if (appliesTextFilter) {
-    const shopsQuery = buildShopsQuery().limit(RESULT_LIMIT_FILTERED);
+    const shopsQuery = buildShopsQuery().range(0, PAGE_SIZE - 1);
     const listingsQuery = supabase
       .from("listings")
       .select(
-        `
-        id,
-        title,
-        description,
-        price,
-        discount_percentage,
-        image_urls,
-        shop_id,
-        created_at,
-        shops ( name, slug, logo_url, business_type, category_id, subcategory_id )
-      `,
+        `id, title, price, image_urls, created_at,
+         shops ( name, slug, logo_url, business_type, category_id, subcategory_id )`,
       )
       .or(`title.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%`)
       .order("created_at", { ascending: false })
-      .limit(LISTINGS_FETCH_CAP);
+      .range(0, listingsOversample - 1);
 
     const [shopsRes, listingsRes] = await Promise.all([shopsQuery, listingsQuery]);
 
     shopError = shopsRes.error;
     shopRows = shopsRes.data;
 
-    if (listingsRes.error) {
-      listingRowsForUi = [];
-    } else {
-      const raw = (listingsRes.data ?? []) as typeof listingRowsForUi;
-      listingRowsForUi = raw.filter((row) => {
-        const sh = unwrapShopEmbed(row.shops);
-        if (!sh) return false;
-        return shopMatchesExploreFilters(sh, typeFilter, catFilter, subcatFilter);
-      });
-      listingRowsForUi = listingRowsForUi.slice(0, RESULT_LIMIT_FILTERED);
+    if (!listingsRes.error && listingsRes.data) {
+      for (const row of listingsRes.data) {
+        if (searchListings.length >= LISTINGS_PAGE_SIZE) break;
+        const sh = unwrapShopEmbed(
+          (row as Record<string, unknown>).shops,
+        );
+        if (!sh?.slug) continue;
+        if (!shopMatchesExploreFilters(sh, typeFilter, catFilter, subcatFilter))
+          continue;
+        searchListings.push({
+          id: String(row.id),
+          title: String(row.title),
+          price: row.price != null ? Number(row.price) : null,
+          image_urls: row.image_urls as Json,
+          shopName: sh.name,
+          shopSlug: sh.slug,
+          shopLogoUrl: sh.logo_url,
+        });
+      }
+      const fetchedFull = listingsRes.data.length === listingsOversample;
+      hasMoreListings =
+        fetchedFull && searchListings.length === LISTINGS_PAGE_SIZE;
     }
   } else {
-    const q = buildShopsQuery();
-    const limited = hasActiveFilters
-      ? q.limit(RESULT_LIMIT_FILTERED)
-      : q.limit(RESULT_LIMIT_DEFAULT);
-    const res = await limited;
+    const res = await buildShopsQuery().range(0, PAGE_SIZE - 1);
     shopError = res.error;
     shopRows = res.data;
   }
@@ -201,6 +193,14 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
       logo_url: (s.logo_url as string | null) ?? null,
       whatsapp_number: (s.whatsapp_number as string | null) ?? null,
     })) ?? [];
+
+  const hasMoreShops = (shopRows?.length ?? 0) === PAGE_SIZE;
+  const loadMoreFilters = {
+    q: appliesTextFilter ? safeTerm : undefined,
+    type: typeFilter || undefined,
+    cat: catFilter || undefined,
+    subcat: subcatFilter || undefined,
+  };
 
   let heading: string;
   let subheading: string | null = null;
@@ -226,9 +226,15 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
   }
 
   const showMarketplaceLayout = appliesTextFilter;
-  const hasListings = listingRowsForUi.length > 0;
+  const hasListings = searchListings.length > 0;
   const totalTextHitsEmpty =
     appliesTextFilter && shops.length === 0 && !hasListings && !shopError;
+  const listingsLoadMoreFilters = {
+    q: safeTerm,
+    type: typeFilter || undefined,
+    cat: catFilter || undefined,
+    subcat: subcatFilter || undefined,
+  };
 
   return (
     <section
@@ -272,11 +278,11 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
             <div>
               <h3 className="mb-4 text-lg font-semibold text-zinc-900">Locales</h3>
               {shops.length > 0 ? (
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {shops.map((shop) => (
-                    <ShopCard key={shop.id} shop={shop} variant="directory" />
-                  ))}
-                </div>
+                <ShopGridLoadMore
+                  initialShops={shops}
+                  initialHasMore={hasMoreShops}
+                  filters={loadMoreFilters}
+                />
               ) : (
                 <p className="text-sm text-zinc-500">
                   No encontramos locales con este nombre
@@ -289,35 +295,21 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
                 <h3 className="mb-4 text-lg font-semibold text-zinc-900">
                   Productos y servicios
                 </h3>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {listingRowsForUi
-                    .map((row) => {
-                      const sh = unwrapShopEmbed(row.shops);
-                      return sh?.slug ? { row, sh } : null;
-                    })
-                    .filter((x): x is NonNullable<typeof x> => x != null)
-                    .map(({ row, sh }) => (
-                      <SearchListingCard
-                        key={row.id}
-                        title={row.title}
-                        price={row.price}
-                        imageUrls={row.image_urls}
-                        shopName={sh.name}
-                        shopSlug={sh.slug}
-                        shopLogoUrl={sh.logo_url}
-                      />
-                    ))}
-                </div>
+                <ListingGridLoadMore
+                  initialListings={searchListings}
+                  initialHasMore={hasMoreListings}
+                  filters={listingsLoadMoreFilters}
+                />
               </div>
             )}
           </div>
         )
       ) : shops.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {shops.map((shop) => (
-            <ShopCard key={shop.id} shop={shop} variant="directory" />
-          ))}
-        </div>
+        <ShopGridLoadMore
+          initialShops={shops}
+          initialHasMore={hasMoreShops}
+          filters={loadMoreFilters}
+        />
       ) : hasActiveFilters ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-slate-50/80 px-6 py-16 text-center">
           <p className="max-w-md text-lg text-zinc-600">

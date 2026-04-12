@@ -9,6 +9,7 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
+import { LocationPicker } from "@/components/location-picker";
 import {
   Card,
   CardContent,
@@ -51,6 +52,9 @@ const schema = z.object({
     .string()
     .min(10, "La descripcion debe tener al menos 10 caracteres.")
     .max(220, "La descripcion no puede superar 220 caracteres."),
+  address: z.string().max(300, "Direccion: maximo 300 caracteres."),
+  latitude: z.string(),
+  longitude: z.string(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -58,7 +62,7 @@ type FormValues = z.infer<typeof schema>;
 const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024;
 
 type InitialFieldValues = Partial<
-  Pick<FormValues, "name" | "whatsapp" | "description" | "instagram">
+  Pick<FormValues, "name" | "whatsapp" | "description" | "instagram" | "address" | "latitude" | "longitude">
 >;
 
 function resolveInitialBusinessType(
@@ -121,6 +125,9 @@ export function NewShopForm({
       whatsapp: initialValues?.whatsapp ?? "",
       instagram: initialValues?.instagram ?? "",
       description: initialValues?.description ?? "",
+      address: initialValues?.address ?? "",
+      latitude: initialValues?.latitude ?? "",
+      longitude: initialValues?.longitude ?? "",
     },
   });
 
@@ -154,6 +161,9 @@ export function NewShopForm({
       formData.set("whatsapp", values.whatsapp);
       formData.set("instagram", values.instagram.trim());
       formData.set("description", values.description);
+      if (values.address) formData.set("address", values.address);
+      if (values.latitude) formData.set("latitude", values.latitude);
+      if (values.longitude) formData.set("longitude", values.longitude);
       if (selectedLogo) formData.set("logo", selectedLogo);
 
       const result = await createShop(formData);
@@ -386,6 +396,15 @@ export function NewShopForm({
               </p>
             )}
           </div>
+
+          <LocationPicker
+            latitude={form.watch("latitude")}
+            longitude={form.watch("longitude")}
+            address={form.watch("address")}
+            onLatitudeChange={(v) => form.setValue("latitude", v, { shouldDirty: true })}
+            onLongitudeChange={(v) => form.setValue("longitude", v, { shouldDirty: true })}
+            onAddressChange={(v) => form.setValue("address", v, { shouldDirty: true })}
+          />
 
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-slate-900">Foto de perfil / logo</label>

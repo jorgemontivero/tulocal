@@ -131,6 +131,17 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     description: formData.get("description"),
   });
 
+  const rawAddress = String(formData.get("address") ?? "").trim();
+  const rawLat = String(formData.get("latitude") ?? "").trim();
+  const rawLng = String(formData.get("longitude") ?? "").trim();
+  const parsedLat = rawLat ? Number.parseFloat(rawLat) : null;
+  const parsedLng = rawLng ? Number.parseFloat(rawLng) : null;
+  const locationAddress = rawAddress || null;
+  const locationLat =
+    parsedLat != null && Number.isFinite(parsedLat) ? parsedLat : null;
+  const locationLng =
+    parsedLng != null && Number.isFinite(parsedLng) ? parsedLng : null;
+
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos invalidos." };
   }
@@ -223,6 +234,9 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     instagram_username,
     description: parsed.data.description,
     logo_url: logoUrl,
+    address: locationAddress,
+    latitude: locationLat,
+    longitude: locationLng,
   };
 
   const writeQuery = existingShop
