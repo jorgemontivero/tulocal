@@ -34,6 +34,56 @@ export type Database = {
         };
         Relationships: [];
       };
+      categories: {
+        Row: {
+          id: string;
+          name: string;
+          business_type: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          business_type: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          business_type?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      subcategories: {
+        Row: {
+          id: string;
+          category_id: string;
+          name: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          category_id: string;
+          name: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          category_id?: string;
+          name?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "subcategories_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       shops: {
         Row: {
           id: string;
@@ -41,6 +91,9 @@ export type Database = {
           name: string;
           slug: string;
           category: string | null;
+          business_type: string | null;
+          category_id: string | null;
+          subcategory_id: string | null;
           whatsapp_number: string | null;
           instagram_username: string | null;
           description: string | null;
@@ -56,6 +109,9 @@ export type Database = {
           name: string;
           slug: string;
           category?: string | null;
+          business_type?: string | null;
+          category_id?: string | null;
+          subcategory_id?: string | null;
           whatsapp_number?: string | null;
           instagram_username?: string | null;
           description?: string | null;
@@ -71,6 +127,9 @@ export type Database = {
           name?: string;
           slug?: string;
           category?: string | null;
+          business_type?: string | null;
+          category_id?: string | null;
+          subcategory_id?: string | null;
           whatsapp_number?: string | null;
           instagram_username?: string | null;
           description?: string | null;

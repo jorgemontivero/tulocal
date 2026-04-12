@@ -1,8 +1,5 @@
-import Image from "next/image";
-import Link from "next/link";
 import type { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
-import { Poppins } from "next/font/google";
 import { MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -21,13 +18,6 @@ import {
   listingOriginalBeforeDiscount,
   listingShowsConsultar,
 } from "@/lib/listing-display";
-
-const brandSans = Poppins({
-  subsets: ["latin"],
-  weight: ["800"],
-  style: ["italic"],
-  display: "swap",
-});
 
 type ShopPageProps = {
   params: Promise<{ slug: string }>;
@@ -154,41 +144,26 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
     <main className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <Card className="border border-zinc-200 bg-white shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="size-14">
-                {shop.logo_url && <AvatarImage src={shop.logo_url} alt={`Logo de ${shop.name}`} />}
-                <AvatarFallback className="bg-slate-100 font-semibold text-slate-700">
+          <CardHeader className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+            <div className="flex min-w-0 flex-1 flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
+              <Avatar className="size-24 shrink-0 ring-2 ring-zinc-200/90 ring-offset-2 ring-offset-white md:size-32">
+                {shop.logo_url && (
+                  <AvatarImage src={shop.logo_url} alt={`Logo de ${shop.name}`} className="object-cover" />
+                )}
+                <AvatarFallback className="bg-slate-100 text-3xl font-semibold text-slate-700 md:text-4xl">
                   {shop.name.slice(0, 1).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <Link
-                  href="/"
-                  className="mb-2 inline-flex items-center gap-2.5 rounded-lg outline-offset-4 hover:opacity-90"
-                >
-                  <Image
-                    src="/logo-tulocal.png"
-                    alt=""
-                    width={200}
-                    height={48}
-                    className="h-10 w-auto object-contain"
-                  />
-                  <span
-                    className={`${brandSans.className} text-xl font-extrabold italic tracking-tight text-slate-900 sm:text-2xl`}
-                  >
-                    Tu Local
-                  </span>
-                </Link>
-                <CardTitle className="text-2xl text-slate-900">{shop.name}</CardTitle>
-                <CardDescription className="text-slate-700">
+              <div className="min-w-0 text-center sm:text-left">
+                <CardTitle className="text-2xl text-slate-900 sm:text-3xl">{shop.name}</CardTitle>
+                <CardDescription className="mt-1 text-base text-slate-700">
                   {shop.category ?? "Comercio local"} {shop.description ? `· ${shop.description}` : ""}
                 </CardDescription>
               </div>
             </div>
 
             {(shop.whatsapp_number || instagramUrl) ? (
-              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+              <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 sm:justify-end">
                 {shop.whatsapp_number ? (
                   <Button
                     render={

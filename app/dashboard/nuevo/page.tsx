@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { NewShopForm } from "./new-shop-form";
+import { fetchShopTaxonomy } from "@/lib/shop-taxonomy";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function NewShopPage() {
@@ -17,10 +18,13 @@ export default async function NewShopPage() {
     .select("*")
     .eq("vendor_id", user.id)
     .maybeSingle();
+
   const shopData = existingShop as
     | {
         name?: string | null;
-        category?: string | null;
+        business_type?: string | null;
+        category_id?: string | null;
+        subcategory_id?: string | null;
         whatsapp_number?: string | null;
         instagram_username?: string | null;
         description?: string | null;
@@ -28,11 +32,17 @@ export default async function NewShopPage() {
       }
     | null;
 
+  const { categories, subcategories } = await fetchShopTaxonomy(supabase);
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <div className="w-full max-w-xl">
         <NewShopForm
-          initialCategory={shopData?.category ?? ""}
+          taxonomyCategories={categories}
+          taxonomySubcategories={subcategories}
+          initialBusinessType={shopData?.business_type ?? null}
+          initialCategoryId={shopData?.category_id ?? null}
+          initialSubcategoryId={shopData?.subcategory_id ?? null}
           initialValues={{
             name: shopData?.name ?? "",
             whatsapp: shopData?.whatsapp_number ?? "",

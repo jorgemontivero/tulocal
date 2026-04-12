@@ -26,7 +26,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createShop } from "@/app/dashboard/actions";
+import type { ShopTaxonomyCategory, ShopTaxonomySubcategory } from "@/lib/shop-taxonomy";
 import { cn } from "@/lib/utils";
+
+/** Compat: antes se exportaban estos alias desde este módulo. */
+export type TaxonomyCategory = ShopTaxonomyCategory;
+export type TaxonomySubcategory = ShopTaxonomySubcategory;
 
 const brandSans = Poppins({
   subsets: ["latin"],
@@ -35,52 +40,18 @@ const brandSans = Poppins({
   display: "swap",
 });
 
-export const RUBRO_OTRO_ESPECIFICAR = "Otro, especificar";
-
-export const CATEGORIAS_PREDEFINIDAS = [
-  "Gastronomia",
-  "Moda",
-  "Hogar",
-  "Tecnologia",
-  "Salud y Belleza",
-  "Servicios",
-] as const;
-
-const CATEGORIAS_SELECT = [...CATEGORIAS_PREDEFINIDAS, RUBRO_OTRO_ESPECIFICAR];
-
-function initialCategoryFields(stored: string | null | undefined) {
-  const c = stored?.trim() ?? "";
-  if (!c) return { category: "", categoryCustom: "" };
-  if ((CATEGORIAS_PREDEFINIDAS as readonly string[]).includes(c)) {
-    return { category: c, categoryCustom: "" };
-  }
-  return { category: RUBRO_OTRO_ESPECIFICAR, categoryCustom: c };
-}
-
-const schema = z
-  .object({
-    name: z.string().min(2, "Ingresa un nombre valido."),
-    category: z.string().min(1, "Selecciona un rubro."),
-    categoryCustom: z.string().optional(),
-    whatsapp: z.string().min(6, "Ingresa un WhatsApp valido."),
-    instagram: z.string().max(100, "Instagram: maximo 100 caracteres."),
-    description: z
-      .string()
-      .min(10, "La descripcion debe tener al menos 10 caracteres.")
-      .max(220, "La descripcion no puede superar 220 caracteres."),
-  })
-  .superRefine((data, ctx) => {
-    if (data.category === RUBRO_OTRO_ESPECIFICAR) {
-      const t = (data.categoryCustom ?? "").trim();
-      if (t.length < 2) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Especifica el rubro con al menos 2 caracteres.",
-          path: ["categoryCustom"],
-        });
-      }
-    }
-  });
+const schema = z.object({
+  name: z.string().min(2, "Ingresa un nombre valido."),
+  business_type: z.enum(["producto", "servicio"]),
+  category_id: z.string().min(1, "Selecciona una categoria."),
+  subcategory_id: z.string().min(1, "Selecciona una subcategoria."),
+  whatsapp: z.string().min(6, "Ingresa un WhatsApp valido."),
+  instagram: z.string().max(100, "Instagram: maximo 100 caracteres."),
+  description: z
+    .string()
+    .min(10, "La descripcion debe tener al menos 10 caracteres.")
+    .max(220, "La descripcion no puede superar 220 caracteres."),
+});
 
 type FormValues = z.infer<typeof schema>;
 
@@ -90,12 +61,39 @@ type InitialFieldValues = Partial<
   Pick<FormValues, "name" | "whatsapp" | "description" | "instagram">
 >;
 
+function resolveInitialBusinessType(
+  initialFromShop: string | null | undefined,
+  categoryId: string | null | undefined,
+  categories: ShopTaxonomyCategory[],
+): "producto" | "servicio" {
+  if (initialFromShop === "producto" || initialFromShop === "servicio") {
+    return initialFromShop;
+  }
+  if (categoryId) {
+    const row = categories.find((c) => c.id === categoryId);
+    if (row) return row.business_type;
+  }
+  return "producto";
+}
+
+/**
+ * Listas de rubros: solo vía props desde el Server Component padre (`page.tsx`),
+ * cargadas con `fetchShopTaxonomy` → Supabase. No hay arrays estáticos de taxonomía en este archivo.
+ */
 export function NewShopForm({
-  initialCategory = "",
+  taxonomyCategories,
+  taxonomySubcategories,
+  initialBusinessType,
+  initialCategoryId,
+  initialSubcategoryId,
   initialValues,
   initialLogoUrl,
 }: {
-  initialCategory?: string | null;
+  taxonomyCategories: ShopTaxonomyCategory[];
+  taxonomySubcategories: ShopTaxonomySubcategory[];
+  initialBusinessType?: string | null;
+  initialCategoryId?: string | null;
+  initialSubcategoryId?: string | null;
   initialValues?: InitialFieldValues;
   initialLogoUrl?: string;
 }) {
@@ -105,41 +103,54 @@ export function NewShopForm({
   const [isPending, startTransition] = useTransition();
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
 
-  const rubroInicial = initialCategoryFields(initialCategory);
+  /** Cálculo síncrono antes de useForm: instante cero con el tipo correcto para el filtro de categorías. */
+  const resolvedBusinessType = resolveInitialBusinessType(
+    initialBusinessType,
+    initialCategoryId ?? undefined,
+    taxonomyCategories,
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: initialValues?.name ?? "",
-      category: rubroInicial.category,
-      categoryCustom: rubroInicial.categoryCustom,
+      business_type: resolvedBusinessType,
+      /** Siempre string (nunca undefined) para que Radix Select sea controlado de forma estable. */
+      category_id: initialCategoryId != null ? String(initialCategoryId) : "",
+      subcategory_id: initialSubcategoryId != null ? String(initialSubcategoryId) : "",
       whatsapp: initialValues?.whatsapp ?? "",
       instagram: initialValues?.instagram ?? "",
       description: initialValues?.description ?? "",
     },
   });
 
-  const categoryWatch = form.watch("category");
-  const showCategoryCustom = categoryWatch === RUBRO_OTRO_ESPECIFICAR;
+  const businessType = form.watch("business_type");
+  const categoryId = form.watch("category_id");
+
+  const categoriesForType = taxonomyCategories.filter((c) => c.business_type === businessType);
+  const subcategoriesForCategory = taxonomySubcategories.filter((s) => s.category_id === categoryId);
 
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
     setFileError(null);
+
+    const sub = taxonomySubcategories.find((s) => s.id === values.subcategory_id);
+    if (!sub || sub.category_id !== values.category_id) {
+      form.setError("subcategory_id", { message: "Elegi una subcategoria valida." });
+      return;
+    }
 
     if (selectedLogo && selectedLogo.size > MAX_LOGO_SIZE_BYTES) {
       setFileError("La imagen supera los 5MB. Elige una foto mas liviana.");
       return;
     }
 
-    const resolvedCategory =
-      values.category === RUBRO_OTRO_ESPECIFICAR
-        ? (values.categoryCustom ?? "").trim()
-        : values.category;
-
     startTransition(async () => {
       const formData = new FormData();
       formData.set("name", values.name);
-      formData.set("category", resolvedCategory);
+      formData.set("business_type", values.business_type);
+      formData.set("category_id", values.category_id);
+      formData.set("subcategory_id", values.subcategory_id);
       formData.set("whatsapp", values.whatsapp);
       formData.set("instagram", values.instagram.trim());
       formData.set("description", values.description);
@@ -195,48 +206,130 @@ export function NewShopForm({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-slate-900">Rubro / Categoria</label>
+            <label className="text-sm font-semibold text-slate-900">Tipo de negocio</label>
             <Controller
-              name="category"
+              name="business_type"
               control={form.control}
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={(v) => {
+                    field.onChange(v);
+                    form.setValue("category_id", "", { shouldValidate: false, shouldDirty: true });
+                    form.setValue("subcategory_id", "", { shouldValidate: false, shouldDirty: true });
+                  }}
+                >
                   <SelectTrigger className="h-10 w-full bg-white">
-                    <SelectValue placeholder="Selecciona un rubro" />
+                    <SelectValue placeholder="Que ofreces" />
                   </SelectTrigger>
                   <SelectContent>
-                    {CATEGORIAS_SELECT.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="producto">Ofrezco productos</SelectItem>
+                    <SelectItem value="servicio">Ofrezco servicios</SelectItem>
                   </SelectContent>
                 </Select>
               )}
             />
-            {form.formState.errors.category && (
-              <p className="text-xs text-red-600">{form.formState.errors.category.message}</p>
+            {form.formState.errors.business_type && (
+              <p className="text-xs text-red-600">
+                {form.formState.errors.business_type.message}
+              </p>
             )}
           </div>
 
-          {showCategoryCustom && (
-            <div className="space-y-1.5">
-              <label htmlFor="category-custom" className="text-sm font-semibold text-slate-900">
-                Especifica el rubro
-              </label>
-              <Input
-                id="category-custom"
-                type="text"
-                placeholder="Ej: Servicio Técnico de Drones"
-                {...form.register("categoryCustom")}
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-slate-900">Categoria</label>
+            {!taxonomyCategories.length ? (
+              <div
+                className="h-10 w-full animate-pulse rounded-lg bg-zinc-200/90"
+                aria-busy
+                aria-label="Cargando categorias"
               />
-              {form.formState.errors.categoryCustom && (
-                <p className="text-xs text-red-600">
-                  {form.formState.errors.categoryCustom.message}
-                </p>
-              )}
-            </div>
-          )}
+            ) : categoriesForType.length === 0 ? (
+              <p className="text-xs text-amber-800">
+                No hay categorias para este tipo de negocio. Revisá el seed o elegí otro tipo.
+              </p>
+            ) : (
+              <Controller
+                name="category_id"
+                control={form.control}
+                render={({ field }) => (
+                  <Select
+                    key={`category-${businessType}-${categoriesForType.length}`}
+                    value={field.value}
+                    onValueChange={(v) => {
+                      field.onChange(v);
+                      form.setValue("subcategory_id", "", { shouldValidate: false, shouldDirty: true });
+                    }}
+                  >
+                    <SelectTrigger className="h-10 w-full bg-white">
+                      <SelectValue placeholder="Selecciona una categoria">
+                        {categoriesForType.find((c) => c.id === field.value)?.name ??
+                          taxonomyCategories.find((c) => c.id === field.value)?.name ??
+                          null}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoriesForType.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            )}
+            {form.formState.errors.category_id && (
+              <p className="text-xs text-red-600">{form.formState.errors.category_id.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-slate-900">Subcategoria</label>
+            {!taxonomyCategories.length ? (
+              <div
+                className="h-10 w-full animate-pulse rounded-lg bg-zinc-200/90"
+                aria-busy
+                aria-label="Cargando subcategorias"
+              />
+            ) : !categoryId ? (
+              <p className="text-xs text-zinc-500">Primero elegí una categoria.</p>
+            ) : subcategoriesForCategory.length === 0 ? (
+              <p className="text-xs text-amber-800">No hay subcategorias para esta categoria.</p>
+            ) : (
+              <Controller
+                name="subcategory_id"
+                control={form.control}
+                render={({ field }) => (
+                  <Select
+                    key={`subcategory-${categoryId}-${subcategoriesForCategory.length}`}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger className="h-10 w-full bg-white">
+                      <SelectValue placeholder="Selecciona una subcategoria">
+                        {subcategoriesForCategory.find((s) => s.id === field.value)?.name ??
+                          taxonomySubcategories.find((s) => s.id === field.value)?.name ??
+                          null}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subcategoriesForCategory.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            )}
+            {form.formState.errors.subcategory_id && (
+              <p className="text-xs text-red-600">
+                {form.formState.errors.subcategory_id.message}
+              </p>
+            )}
+          </div>
 
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-slate-900">WhatsApp</label>

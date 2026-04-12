@@ -6,7 +6,11 @@ import { parseListingImageUrls } from "@/lib/listing-display";
 
 const newShopSchema = z.object({
   name: z.string().min(2, "Ingresa un nombre valido."),
-  category: z.string().min(1, "Selecciona un rubro."),
+  business_type: z.enum(["producto", "servicio"], {
+    error: "Selecciona el tipo de negocio.",
+  }),
+  category_id: z.uuid("Selecciona una categoria valida."),
+  subcategory_id: z.uuid("Selecciona una subcategoria valida."),
   whatsapp: z.string().min(6, "Ingresa un WhatsApp valido."),
   instagram: z.string().max(100, "Instagram: maximo 100 caracteres."),
   description: z
@@ -119,7 +123,9 @@ async function uploadListingImageFiles(
 export async function createShop(formData: FormData): Promise<CreateShopResult> {
   const parsed = newShopSchema.safeParse({
     name: formData.get("name"),
-    category: formData.get("category"),
+    business_type: formData.get("business_type"),
+    category_id: formData.get("category_id"),
+    subcategory_id: formData.get("subcategory_id"),
     whatsapp: formData.get("whatsapp"),
     instagram: String(formData.get("instagram") ?? ""),
     description: formData.get("description"),
@@ -172,11 +178,47 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     parsed.data.instagram?.trim().replace(/^@/, "") ?? "";
   const instagram_username = instagramUsername === "" ? null : instagramUsername;
 
+  const { data: subRow, error: subErr } = await supabase
+    .from("subcategories")
+    .select("id, name, category_id")
+    .eq("id", parsed.data.subcategory_id)
+    .maybeSingle();
+
+  if (subErr || !subRow) {
+    return { ok: false, error: "La subcategoria seleccionada no es valida." };
+  }
+
+  const { data: catRow, error: catErr } = await supabase
+    .from("categories")
+    .select("id, name, business_type")
+    .eq("id", subRow.category_id)
+    .maybeSingle();
+
+  if (catErr || !catRow) {
+    return { ok: false, error: "La categoria no es valida." };
+  }
+
+  if (catRow.id !== parsed.data.category_id) {
+    return { ok: false, error: "La categoria y la subcategoria no coinciden." };
+  }
+
+  if (catRow.business_type !== parsed.data.business_type) {
+    return {
+      ok: false,
+      error: "El tipo de negocio no coincide con la categoria elegida.",
+    };
+  }
+
+  const categoryLabel = `${catRow.name} — ${subRow.name}`;
+
   const payload = {
     vendor_id: user.id,
     name: parsed.data.name,
     slug,
-    category: parsed.data.category,
+    category: categoryLabel,
+    business_type: parsed.data.business_type,
+    category_id: parsed.data.category_id,
+    subcategory_id: parsed.data.subcategory_id,
     whatsapp_number: parsed.data.whatsapp,
     instagram_username,
     description: parsed.data.description,
@@ -199,6 +241,25 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
       : supabase.from("shops").insert(withoutInstagram);
     const second = await retryQuery;
     error = second.error;
+  }
+
+  if (
+    error &&
+    (error.message.includes("business_type") ||
+      error.message.includes("category_id") ||
+      error.message.includes("subcategory_id"))
+  ) {
+    const {
+      business_type: _bt,
+      category_id: _ci,
+      subcategory_id: _si,
+      ...legacyPayload
+    } = payload;
+    const legacyQuery = existingShop
+      ? supabase.from("shops").update(legacyPayload).eq("id", existingShop.id)
+      : supabase.from("shops").insert(legacyPayload);
+    const third = await legacyQuery;
+    error = third.error;
   }
 
   if (!error) {
