@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Badge } from "@/components/ui/badge";
 import { HeroCarousel } from "@/components/hero-carousel";
+import { SiteFooter } from "@/components/site-footer";
 import { HomeExploreSection } from "@/components/home-explore-section";
 import { SearchBar } from "@/components/search-bar";
 import { ShopResultsList, SkeletonGrid } from "@/components/shop-results-list";
@@ -10,10 +10,10 @@ import { fetchShopTaxonomyForHome } from "@/lib/shop-taxonomy";
 import { createClient } from "@/utils/supabase/server";
 
 const POPULAR_SEARCHES = [
-  { label: "Gastronomía", q: "gastronomia" },
-  { label: "Comercio local", q: "comercio" },
-  { label: "Servicios", q: "servicios" },
-  { label: "Ferretería", q: "ferreteria" },
+  { label: "Pizzas", q: "pizzas" },
+  { label: "Masajes", q: "masajes" },
+  { label: "Pintura", q: "pintura" },
+  { label: "Kiosco", q: "kiosco" },
 ] as const;
 
 export const metadata: Metadata = {
@@ -97,28 +97,7 @@ export default async function Home({ searchParams }: HomePageProps) {
         </Suspense>
       </main>
 
-      <footer className="mt-auto border-t border-emerald-950/30 bg-emerald-800 text-white">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-8">
-          <nav className="flex flex-wrap items-center gap-4">
-            <Link className="text-white/90 hover:text-white" href="/">
-              Inicio
-            </Link>
-            <Link className="text-white/90 hover:text-white" href="/#comercios">
-              Comercios
-            </Link>
-            <Link className="text-white/90 hover:text-white" href="/nosotros">
-              Nosotros
-            </Link>
-            <Link className="text-white/90 hover:text-white" href="/contacto">
-              Contacto
-            </Link>
-            <Badge className="border border-white/20 bg-white/10 text-white hover:bg-white/15">
-              Catamarca
-            </Badge>
-          </nav>
-          <p className="text-white/90">Potenciando el comercio local</p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

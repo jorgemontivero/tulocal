@@ -206,7 +206,7 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
   let subheading: string | null = null;
 
   if (!hasActiveFilters) {
-    heading = "Destacados";
+    heading = "Comercios destacados";
     subheading = "Comercios recientes en el directorio";
   } else {
     const filterBits: string[] = [];

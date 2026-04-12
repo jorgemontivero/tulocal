@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SiteFooter } from "@/components/site-footer";
 import {
   MapPin,
   Eye,
@@ -217,26 +218,7 @@ export default function NosotrosPage() {
         </section>
       </div>
 
-      {/* ── Footer ───────────────────────────────────────────────────── */}
-      <footer className="mt-auto border-t border-emerald-950/30 bg-emerald-800 text-white">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-8">
-          <nav className="flex flex-wrap items-center gap-4">
-            <Link className="text-white/90 hover:text-white" href="/">
-              Inicio
-            </Link>
-            <Link className="text-white/90 hover:text-white" href="/#comercios">
-              Comercios
-            </Link>
-            <Link className="text-white/90 hover:text-white" href="/nosotros">
-              Nosotros
-            </Link>
-            <Link className="text-white/90 hover:text-white" href="/contacto">
-              Contacto
-            </Link>
-          </nav>
-          <p className="text-white/90">Potenciando el comercio local</p>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }
