@@ -5,10 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { HomeExploreSection } from "@/components/home-explore-section";
 import { SearchBar } from "@/components/search-bar";
-import {
-  ShopResultsList,
-  ShopResultsListSkeleton,
-} from "@/components/shop-results-list";
+import { ShopResultsList, SkeletonGrid } from "@/components/shop-results-list";
 import { fetchShopTaxonomyForHome } from "@/lib/shop-taxonomy";
 import { createClient } from "@/utils/supabase/server";
 
@@ -46,10 +43,6 @@ type HomePageProps = {
 export default async function Home({ searchParams }: HomePageProps) {
   const supabase = await createClient();
   const params = await searchParams;
-  const q = params.q ?? "";
-  const type = params.type ?? "";
-  const cat = params.cat ?? "";
-  const subcat = params.subcat ?? "";
 
   const { categories: exploreCategories, subcategories: exploreSubcategories } =
     await fetchShopTaxonomyForHome(supabase);
@@ -99,8 +92,8 @@ export default async function Home({ searchParams }: HomePageProps) {
           />
         </Suspense>
 
-        <Suspense fallback={<ShopResultsListSkeleton />}>
-          <ShopResultsList q={q} type={type} cat={cat} subcat={subcat} />
+        <Suspense fallback={<SkeletonGrid />}>
+          <ShopResultsList searchParams={params} />
         </Suspense>
       </main>
 

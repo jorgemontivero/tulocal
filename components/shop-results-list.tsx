@@ -1,7 +1,6 @@
-import { MessageCircle } from "lucide-react";
+import Link from "next/link";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -18,47 +17,57 @@ function isUuid(s: string): boolean {
   );
 }
 
-export type ShopResultsListProps = {
+/** Params de búsqueda de la home (query string). */
+export type HomeResultsSearchParams = {
   q?: string;
   type?: string;
   cat?: string;
   subcat?: string;
 };
 
-export async function ShopResultsList({
-  q = "",
-  type = "",
-  cat = "",
-  subcat = "",
-}: ShopResultsListProps) {
-  const term = q.trim();
-  const typeRaw = type.trim();
-  const catRaw = cat.trim();
-  const subcatRaw = subcat.trim();
+export type ShopResultsListProps = {
+  searchParams: HomeResultsSearchParams;
+};
 
-  const validType =
-    typeRaw === "producto" || typeRaw === "servicio" ? typeRaw : "";
-  const validCat = isUuid(catRaw) ? catRaw : "";
-  const validSubcat = isUuid(subcatRaw) ? subcatRaw : "";
+function normalizeParam(v: string | undefined): string {
+  return (v ?? "").trim();
+}
+
+function isActiveType(v: string): v is "producto" | "servicio" {
+  return v === "producto" || v === "servicio";
+}
+
+export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
+  const term = normalizeParam(searchParams.q);
+  const typeRaw = normalizeParam(searchParams.type);
+  const catRaw = normalizeParam(searchParams.cat);
+  const subcatRaw = normalizeParam(searchParams.subcat);
+
+  const typeFilter =
+    typeRaw && typeRaw !== "all" && isActiveType(typeRaw) ? typeRaw : "";
+  const catFilter =
+    catRaw && catRaw !== "all" && isUuid(catRaw) ? catRaw : "";
+  const subcatFilter =
+    subcatRaw && subcatRaw !== "all" && isUuid(subcatRaw) ? subcatRaw : "";
 
   const supabase = await createClient();
 
   let categoryLabel: string | null = null;
-  if (validCat) {
+  if (catFilter) {
     const { data: catRow } = await supabase
       .from("categories")
       .select("name")
-      .eq("id", validCat)
+      .eq("id", catFilter)
       .maybeSingle();
     categoryLabel = catRow?.name ?? null;
   }
 
   let subcategoryLabel: string | null = null;
-  if (validSubcat) {
+  if (subcatFilter) {
     const { data: subRow } = await supabase
       .from("subcategories")
       .select("name")
-      .eq("id", validSubcat)
+      .eq("id", subcatFilter)
       .maybeSingle();
     subcategoryLabel = subRow?.name ?? null;
   }
@@ -66,26 +75,27 @@ export async function ShopResultsList({
   const safeTerm = term.replace(/[%_,]/g, " ").trim();
   const appliesTextFilter = term.length > 0 && safeTerm.length > 0;
   const hasActiveFilters =
-    appliesTextFilter || validSubcat.length > 0 || validCat.length > 0 || validType.length > 0;
+    appliesTextFilter ||
+    Boolean(subcatFilter) ||
+    Boolean(catFilter) ||
+    Boolean(typeFilter);
 
-  let query = supabase
-    .from("shops")
-    .select("id,name,slug,description,logo_url,whatsapp_number")
-    .order("created_at", { ascending: false });
+  let query = supabase.from("shops").select("*").order("created_at", { ascending: false });
+
+  if (typeFilter) {
+    query = query.eq("business_type", typeFilter);
+  }
+
+  if (catFilter) {
+    query = query.eq("category_id", catFilter);
+  }
+
+  if (subcatFilter) {
+    query = query.eq("subcategory_id", subcatFilter);
+  }
 
   if (appliesTextFilter) {
     query = query.or(`name.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%`);
-  }
-
-  if (validSubcat) {
-    query = query.eq("subcategory_id", validSubcat);
-  } else if (validCat) {
-    query = query.eq("category_id", validCat);
-  }
-
-  /** Solo con `type` en la URL (pestañas del home); enlaces viejos con solo `cat` no fuerzan rubro. */
-  if (validType) {
-    query = query.eq("business_type", validType);
   }
 
   query = hasActiveFilters
@@ -112,8 +122,8 @@ export async function ShopResultsList({
     subheading = "Comercios recientes en el directorio";
   } else {
     const filterBits: string[] = [];
-    if (validType) {
-      filterBits.push(validType === "producto" ? "Productos" : "Servicios");
+    if (typeFilter) {
+      filterBits.push(typeFilter === "producto" ? "Productos" : "Servicios");
     }
     if (categoryLabel) filterBits.push(categoryLabel);
     if (subcategoryLabel) filterBits.push(subcategoryLabel);
@@ -152,26 +162,23 @@ export async function ShopResultsList({
           </CardHeader>
         </Card>
       ) : shops.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {shops.map((shop) => (
-            <ShopCard key={shop.id} shop={shop} />
+            <ShopCard key={shop.id} shop={shop} variant="directory" />
           ))}
         </div>
       ) : hasActiveFilters ? (
-        <Card className="border border-dashed border-zinc-200 bg-slate-50/80">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">No hay resultados</CardTitle>
-            <CardDescription className="text-base text-zinc-600">
-              Probá con otros filtros, otra búsqueda o explorá otra categoría.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-3 text-sm text-zinc-500">
-            <span className="inline-flex items-center gap-1.5">
-              <MessageCircle className="size-4 text-emerald-600" aria-hidden />
-              Ajustá la búsqueda o los filtros de arriba para ver más comercios.
-            </span>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-slate-50/80 px-6 py-16 text-center">
+          <p className="max-w-md text-lg text-zinc-600">
+            No encontramos locales que coincidan con tu búsqueda
+          </p>
+          <Link
+            href="/"
+            className="mt-6 inline-flex items-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700"
+          >
+            Limpiar filtros
+          </Link>
+        </div>
       ) : (
         <Card className="border border-zinc-200 bg-white">
           <CardHeader>
@@ -187,6 +194,7 @@ export async function ShopResultsList({
   );
 }
 
+/** Skeleton de la grilla de resultados (home). */
 export function ShopResultsListSkeleton() {
   return (
     <section
@@ -194,14 +202,17 @@ export function ShopResultsListSkeleton() {
       aria-hidden
     >
       <div className="mb-6 h-8 max-w-xs animate-pulse rounded-md bg-zinc-200" />
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, i) => (
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="h-64 animate-pulse rounded-xl border border-zinc-100 bg-zinc-100/80"
+            className="h-80 animate-pulse rounded-xl border border-zinc-100 bg-zinc-100/80"
           />
         ))}
       </div>
     </section>
   );
 }
+
+/** Alias pedido para el fallback de Suspense en la home. */
+export const SkeletonGrid = ShopResultsListSkeleton;

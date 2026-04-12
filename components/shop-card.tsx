@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
 export type ShopCardShop = {
   id: string;
   name: string;
@@ -36,7 +35,78 @@ function toWhatsAppUrl(whatsappNumber: string): string {
   return `https://wa.me/${normalized}`;
 }
 
-export function ShopCard({ shop }: { shop: ShopCardShop }) {
+export type ShopCardProps = {
+  shop: ShopCardShop;
+  /** Directorio home: logo grande arriba y foco en nombre + enlace al perfil. */
+  variant?: "default" | "directory";
+};
+
+export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
+  if (variant === "directory") {
+    return (
+      <Card className="h-full overflow-hidden border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+        <Link
+          href={`/${shop.slug}`}
+          className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2"
+        >
+          <div className="relative flex h-36 w-full items-center justify-center bg-gradient-to-b from-slate-50 to-white px-4 pt-5 pb-2">
+            {shop.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element -- URLs externas de logos de comercios
+              <img
+                src={shop.logo_url}
+                alt=""
+                className="max-h-28 max-w-full object-contain"
+              />
+            ) : (
+              <span
+                className="flex size-24 items-center justify-center rounded-2xl bg-slate-200/90 text-3xl font-bold text-slate-600"
+                aria-hidden
+              >
+                {shop.name.slice(0, 1).toUpperCase()}
+              </span>
+            )}
+          </div>
+          <CardHeader className="space-y-1 pb-2 pt-3">
+            <CardTitle className="line-clamp-2 text-center text-lg leading-snug text-zinc-900">
+              {shop.name}
+            </CardTitle>
+            <CardDescription className="line-clamp-2 min-h-[2.5rem] text-center text-sm">
+              {shortDescription(shop.description)}
+            </CardDescription>
+          </CardHeader>
+        </Link>
+        <CardContent className="space-y-3 pb-5">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Badge className="bg-emerald-600 text-white">{rubroFromSlug(shop.slug)}</Badge>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button
+              render={<Link href={`/${shop.slug}`} />}
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              Ver local
+            </Button>
+            {shop.whatsapp_number && (
+              <Button
+                render={
+                  <a
+                    href={toWhatsAppUrl(shop.whatsapp_number)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                }
+                variant="outline"
+                className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+              >
+                <MessageCircle />
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="h-full border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md">
       <CardHeader>
