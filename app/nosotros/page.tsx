@@ -12,12 +12,6 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Nosotros | tulocal.com.ar — Marketplace de Catamarca",
@@ -99,45 +93,39 @@ export default function NosotrosPage() {
             </p>
           </div>
 
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
-            <Card className="border-zinc-100 bg-white shadow-sm">
-              <CardHeader className="pb-3">
-                <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
-                  <BarChart3 className="size-5" />
-                </div>
-                <CardTitle className="text-base">Análisis riguroso</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-zinc-600">
+          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+            <div className="rounded-2xl border border-zinc-100 bg-white px-6 py-8 text-center shadow-sm">
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                <BarChart3 className="size-6" />
+              </div>
+              <h3 className="text-base font-semibold text-zinc-900">Análisis riguroso</h3>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-600">
                 Cada búsqueda, cada filtro y cada decisión de producto se respalda con datos
                 reales del mercado catamarqueño.
-              </CardContent>
-            </Card>
+              </p>
+            </div>
 
-            <Card className="border-zinc-100 bg-white shadow-sm">
-              <CardHeader className="pb-3">
-                <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
-                  <GraduationCap className="size-5" />
-                </div>
-                <CardTitle className="text-base">Liderazgo académico</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-zinc-600">
+            <div className="rounded-2xl border border-zinc-100 bg-white px-6 py-8 text-center shadow-sm">
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                <GraduationCap className="size-6" />
+              </div>
+              <h3 className="text-base font-semibold text-zinc-900">Liderazgo académico</h3>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-600">
                 Liderado por un Licenciado en Estadística y docente universitario que aplica
                 metodología científica al desarrollo del marketplace.
-              </CardContent>
-            </Card>
+              </p>
+            </div>
 
-            <Card className="border-zinc-100 bg-white shadow-sm">
-              <CardHeader className="pb-3">
-                <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
-                  <Users className="size-5" />
-                </div>
-                <CardTitle className="text-base">Diseño centrado en el usuario</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-zinc-600">
+            <div className="rounded-2xl border border-zinc-100 bg-white px-6 py-8 text-center shadow-sm">
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                <Users className="size-6" />
+              </div>
+              <h3 className="text-base font-semibold text-zinc-900">Diseño centrado en el usuario</h3>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-600">
                 Cada funcionalidad está pensada para que encontrar lo que buscás sea rápido,
                 claro y sin frustraciones — tanto para comerciantes como para compradores.
-              </CardContent>
-            </Card>
+              </p>
+            </div>
           </div>
         </section>
 
