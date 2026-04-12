@@ -106,6 +106,9 @@ export default async function Home({ searchParams }: HomePageProps) {
             <Link className="text-white/90 hover:text-white" href="/#comercios">
               Comercios
             </Link>
+            <Link className="text-white/90 hover:text-white" href="/nosotros">
+              Nosotros
+            </Link>
             <Link className="text-white/90 hover:text-white" href="/contacto">
               Contacto
             </Link>
