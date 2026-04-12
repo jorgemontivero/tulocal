@@ -73,7 +73,7 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
               href="/nosotros"
-              className="hidden whitespace-nowrap text-sm font-medium text-white/90 underline-offset-4 hover:text-white hover:underline sm:inline"
+              className="whitespace-nowrap text-sm font-medium text-white/90 underline-offset-4 hover:text-white hover:underline"
             >
               Nosotros
             </Link>
