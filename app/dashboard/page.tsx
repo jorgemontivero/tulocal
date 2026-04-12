@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { CatalogManager } from "@/app/dashboard/catalog-manager";
+import { CatalogManager, type ListingItem } from "@/app/dashboard/catalog-manager";
 import { signOut } from "@/app/auth/actions";
 import { createClient } from "@/utils/supabase/server";
 
@@ -60,8 +60,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const { data: listings } = shop
     ? await supabase
         .from("listings")
-        .select("id,title,description,price")
+        .select(
+          "id,title,description,price,discount_percentage,is_promoted,image_urls",
+        )
         .eq("shop_id", shop.id)
+        .order("is_promoted", { ascending: false })
         .order("created_at", { ascending: false })
     : { data: [] };
 
@@ -100,6 +103,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <Card className="border border-emerald-200 bg-emerald-50">
             <CardContent className="pt-4 text-sm text-emerald-700">
               Local guardado con exito.
+            </CardContent>
+          </Card>
+        )}
+
+        {params.success === "listing-actualizado" && (
+          <Card className="border border-emerald-200 bg-emerald-50">
+            <CardContent className="pt-4 text-sm text-emerald-700">
+              Producto actualizado correctamente.
             </CardContent>
           </Card>
         )}
@@ -159,7 +170,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </CardContent>
             </Card>
 
-            <CatalogManager listings={listings ?? []} />
+            <CatalogManager listings={(listings ?? []) as ListingItem[]} />
           </div>
         )}
 

@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
+import { parseListingImageUrls } from "@/lib/listing-display";
 
 const newShopSchema = z.object({
   name: z.string().min(2, "Ingresa un nombre valido."),
@@ -44,6 +45,26 @@ function extFromFile(file: File): string {
   return "jpg";
 }
 
+/** Nombre de archivo seguro + extensión para paths en Storage (sin colisiones entre ítems). */
+function uniqueListingImagePath(
+  userId: string,
+  batchId: string,
+  file: File,
+  index: number,
+): string {
+  const ext = extFromFile(file);
+  const rawBase = file.name.replace(/\.[^.]+$/, "");
+  const safe =
+    rawBase
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "imagen";
+  const unique = crypto.randomUUID();
+  return `${userId}/listings/${batchId}/${index}-${unique}-${safe}.${ext}`;
+}
+
 async function getOwnedShopId(userId: string): Promise<string | null> {
   const supabase = await createClient();
   const { data: shop } = await supabase
@@ -52,6 +73,47 @@ async function getOwnedShopId(userId: string): Promise<string | null> {
     .eq("vendor_id", userId)
     .maybeSingle();
   return shop?.id ?? null;
+}
+
+type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
+
+async function uploadListingImageFiles(
+  supabase: SupabaseServer,
+  userId: string,
+  rawFiles: File[],
+): Promise<{ ok: true; urls: string[] } | { ok: false; error: string }> {
+  if (rawFiles.length === 0) {
+    return { ok: true, urls: [] };
+  }
+  const uploadBatchId = crypto.randomUUID();
+  try {
+    const urls = await Promise.all(
+      rawFiles.map(async (file, index) => {
+        const path = uniqueListingImagePath(userId, uploadBatchId, file, index);
+        const { error: uploadError } = await supabase.storage.from("shop-logos").upload(
+          path,
+          file,
+          {
+            upsert: false,
+            contentType: file.type || undefined,
+          },
+        );
+
+        if (uploadError) {
+          throw new Error(uploadError.message);
+        }
+
+        const { data: publicData } = supabase.storage.from("shop-logos").getPublicUrl(path);
+        return publicData.publicUrl;
+      }),
+    );
+    return { ok: true, urls };
+  } catch {
+    return {
+      ok: false,
+      error: "No pudimos subir una de las imagenes. Intenta nuevamente.",
+    };
+  }
 }
 
 export async function createShop(formData: FormData): Promise<CreateShopResult> {
@@ -168,21 +230,66 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
   return { ok: false, error: "No pudimos guardar tu local. Intenta nuevamente." };
 }
 
-const listingSchema = z.object({
-  title: z.string().min(2, "Ingresa un titulo valido."),
-  description: z
-    .string()
-    .min(4, "Ingresa una descripcion mas completa.")
-    .max(280, "La descripcion no puede superar 280 caracteres."),
-  price: z.coerce.number().positive("El precio debe ser mayor que 0."),
-});
+const MAX_LISTING_IMAGES = 4;
+const MAX_LISTING_IMAGE_BYTES = 5 * 1024 * 1024;
 
-export async function createListing(input: {
-  title: string;
-  description: string;
-  price: number | string;
-}): Promise<ListingActionResult> {
-  const parsed = listingSchema.safeParse(input);
+function parseListingPrice(raw: unknown): number | null {
+  if (raw === null || raw === undefined) return null;
+  const s = String(raw).trim();
+  if (s === "") return null;
+  const n = Number(s.replace(",", "."));
+  if (Number.isNaN(n)) return null;
+  if (n <= 0) return null;
+  return n;
+}
+
+const listingFormSchema = z
+  .object({
+    title: z.string().trim().min(2, "Ingresa un titulo valido."),
+    description: z
+      .string()
+      .trim()
+      .min(4, "Ingresa una descripcion mas completa.")
+      .max(280, "La descripcion no puede superar 280 caracteres."),
+    price: z.union([z.string(), z.number()]).optional(),
+    is_offer: z.boolean(),
+    discount_percentage: z.union([z.string(), z.number()]).optional(),
+    is_promoted: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    const p = parseListingPrice(data.price);
+    if (data.is_offer) {
+      const ds = String(data.discount_percentage ?? "").trim();
+      const d = ds === "" ? Number.NaN : Number(ds.replace(",", "."));
+      if (!Number.isFinite(d) || d < 1 || d > 99) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["discount_percentage"],
+          message: "Ingresa un porcentaje entre 1 y 99.",
+        });
+      }
+      if (p === null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["price"],
+          message: "Con oferta indicá el precio final del producto.",
+        });
+      }
+    }
+  });
+
+export async function saveListing(formData: FormData): Promise<ListingActionResult> {
+  const listingId = String(formData.get("listingId") ?? "").trim();
+
+  const parsed = listingFormSchema.safeParse({
+    title: formData.get("title"),
+    description: formData.get("description"),
+    price: formData.get("price"),
+    is_offer: formData.get("is_offer") === "on",
+    discount_percentage: formData.get("discount_percentage"),
+    is_promoted: formData.get("is_promoted") === "on",
+  });
+
   if (!parsed.success) {
     return {
       ok: false,
@@ -203,11 +310,92 @@ export async function createListing(input: {
     return { ok: false, error: "Primero debes configurar tu local." };
   }
 
+  const priceValue = parseListingPrice(parsed.data.price);
+  const discountPct = parsed.data.is_offer
+    ? Math.round(
+        Number(String(parsed.data.discount_percentage ?? "").replace(",", ".")),
+      )
+    : null;
+
+  const rawFiles = formData
+    .getAll("images")
+    .filter((f): f is File => f instanceof File && f.size > 0)
+    .slice(0, MAX_LISTING_IMAGES);
+
+  for (const file of rawFiles) {
+    if (file.size > MAX_LISTING_IMAGE_BYTES) {
+      return {
+        ok: false,
+        error: "Cada imagen debe pesar como maximo 5MB.",
+      };
+    }
+    if (!file.type.startsWith("image/")) {
+      return { ok: false, error: "Solo se permiten archivos de imagen." };
+    }
+  }
+
+  const payload = {
+    title: parsed.data.title.trim(),
+    description: parsed.data.description.trim(),
+    price: priceValue,
+    discount_percentage: discountPct,
+    is_promoted: parsed.data.is_promoted,
+  };
+
+  if (listingId) {
+    const { data: existing, error: fetchError } = await supabase
+      .from("listings")
+      .select("id, shop_id, image_urls")
+      .eq("id", listingId)
+      .maybeSingle();
+
+    if (fetchError || !existing || existing.shop_id !== shopId) {
+      return {
+        ok: false,
+        error: "No encontramos ese producto o no tenes permiso para editarlo.",
+      };
+    }
+
+    let imageUrls: string[];
+    if (rawFiles.length > 0) {
+      const uploaded = await uploadListingImageFiles(supabase, user.id, rawFiles);
+      if (!uploaded.ok) {
+        return { ok: false, error: uploaded.error };
+      }
+      imageUrls = uploaded.urls;
+    } else {
+      imageUrls = parseListingImageUrls(existing.image_urls);
+    }
+
+    const { error } = await supabase
+      .from("listings")
+      .update({
+        ...payload,
+        image_urls: imageUrls,
+      })
+      .eq("id", listingId)
+      .eq("shop_id", shopId);
+
+    if (error) {
+      return { ok: false, error: "No pudimos actualizar el item del catalogo." };
+    }
+
+    return { ok: true };
+  }
+
+  let imageUrls: string[] = [];
+  if (rawFiles.length > 0) {
+    const uploaded = await uploadListingImageFiles(supabase, user.id, rawFiles);
+    if (!uploaded.ok) {
+      return { ok: false, error: uploaded.error };
+    }
+    imageUrls = uploaded.urls;
+  }
+
   const { error } = await supabase.from("listings").insert({
     shop_id: shopId,
-    title: parsed.data.title,
-    description: parsed.data.description,
-    price: parsed.data.price,
+    ...payload,
+    image_urls: imageUrls,
   });
 
   if (error) {
@@ -216,6 +404,9 @@ export async function createListing(input: {
 
   return { ok: true };
 }
+
+/** @deprecated Usá `saveListing`; se mantiene por compatibilidad. */
+export const createListing = saveListing;
 
 export async function deleteListing(listingId: string): Promise<ListingActionResult> {
   if (!listingId) return { ok: false, error: "ID de item invalido." };

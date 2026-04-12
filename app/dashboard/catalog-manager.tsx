@@ -1,12 +1,11 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -14,27 +13,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { createListing, deleteListing } from "@/app/dashboard/actions";
+import { deleteListing } from "@/app/dashboard/actions";
+import { cn } from "@/lib/utils";
+import {
+  listingOriginalBeforeDiscount,
+  listingShowsConsultar,
+  parseListingImageUrls,
+} from "@/lib/listing-display";
+import { ListingForm, type ListingFormInitial } from "@/app/dashboard/listing-form";
 
-const schema = z.object({
-  title: z.string().min(2, "Ingresa un titulo valido."),
-  description: z
-    .string()
-    .min(4, "Ingresa una descripcion mas completa.")
-    .max(280, "La descripcion no puede superar 280 caracteres."),
-  price: z.number().positive("El precio debe ser mayor que 0."),
-});
-
-type FormValues = z.infer<typeof schema>;
-
-type ListingItem = {
-  id: string;
-  title: string;
-  description: string | null;
-  price: number;
-};
+export type ListingItem = ListingFormInitial;
 
 function formatARS(price: number): string {
   return new Intl.NumberFormat("es-AR", {
@@ -44,36 +32,23 @@ function formatARS(price: number): string {
   }).format(price);
 }
 
+function toNum(price: number | null | undefined): number | null {
+  if (price == null) return null;
+  const n = typeof price === "number" ? price : Number(price);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function CatalogManager({ listings }: { listings: ListingItem[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      title: "",
-      description: "",
-      price: 0,
-    },
-  });
-
-  const onSubmit = form.handleSubmit((values) => {
-    startTransition(async () => {
-      const result = await createListing(values);
-      if (!result.ok) {
-        form.setError("root", { message: result.error ?? "No pudimos crear el item." });
-        return;
-      }
-      form.reset({ title: "", description: "", price: 0 });
-      router.refresh();
-    });
-  });
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDelete = (listingId: string) => {
+    setDeleteError(null);
     startTransition(async () => {
       const result = await deleteListing(listingId);
       if (!result.ok) {
-        form.setError("root", { message: result.error ?? "No pudimos eliminar el item." });
+        setDeleteError(result.error ?? "No pudimos eliminar el item.");
         return;
       }
       router.refresh();
@@ -89,89 +64,122 @@ export function CatalogManager({ listings }: { listings: ListingItem[] }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5 sm:col-span-2">
-            <label className="text-sm font-semibold text-slate-900">Producto/Servicio</label>
-            <Input
-              placeholder="Ej: poncho, dulces regionales, pantalón, etc..."
-              {...form.register("title")}
-            />
-            {form.formState.errors.title && (
-              <p className="text-xs text-red-600">{form.formState.errors.title.message}</p>
-            )}
-          </div>
+        <ListingForm mode="create" fileInputId="listing-catalog-images" />
 
-          <div className="space-y-1.5 sm:col-span-2">
-            <label className="text-sm font-semibold text-slate-900">Descripcion</label>
-            <Textarea
-              rows={3}
-              placeholder="Describe brevemente que incluye este item."
-              {...form.register("description")}
-            />
-            {form.formState.errors.description && (
-              <p className="text-xs text-red-600">{form.formState.errors.description.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-slate-900">Precio (ARS)</label>
-            <Input
-              type="number"
-              min="0"
-              step="1"
-              placeholder="120000"
-              {...form.register("price", { valueAsNumber: true })}
-            />
-            {form.formState.errors.price && (
-              <p className="text-xs text-red-600">{form.formState.errors.price.message}</p>
-            )}
-          </div>
-
-          <div className="flex items-end">
-            <Button
-              type="submit"
-              className="h-10 w-full bg-emerald-600 text-white hover:bg-emerald-700"
-              disabled={isPending}
-            >
-              {isPending ? "Guardando..." : "Agregar item"}
-            </Button>
-          </div>
-
-          {form.formState.errors.root && (
-            <p className="text-sm text-red-600 sm:col-span-2">
-              {form.formState.errors.root.message}
-            </p>
-          )}
-        </form>
+        {deleteError ? <p className="text-sm text-red-600">{deleteError}</p> : null}
 
         <div className="space-y-3">
           {listings.length === 0 ? (
             <p className="text-sm text-slate-700">Todavia no agregaste items al catalogo.</p>
           ) : (
-            listings.map((item) => (
-              <Card key={item.id} className="border border-zinc-200">
-                <CardContent className="flex items-start justify-between gap-3 pt-4">
-                  <div>
-                    <p className="font-semibold text-slate-900">{item.title}</p>
-                    <p className="mt-1 text-sm text-slate-700">
-                      {item.description ?? "Sin descripcion"}
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-emerald-700">
-                      {formatARS(item.price)}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="border-red-200 text-red-600 hover:bg-red-50"
-                    onClick={() => handleDelete(item.id)}
-                    disabled={isPending}
-                  >
-                    <Trash2 />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))
+            listings.map((item) => {
+              const imgs = parseListingImageUrls(item.image_urls);
+              const priceVal = toNum(item.price);
+              const disc =
+                item.discount_percentage == null
+                  ? null
+                  : Number(item.discount_percentage);
+              const showConsultar = listingShowsConsultar(priceVal);
+              const showOffer =
+                !showConsultar &&
+                disc != null &&
+                disc > 0 &&
+                priceVal != null;
+
+              return (
+                <Card
+                  key={item.id}
+                  className={cn(
+                    "relative overflow-hidden",
+                    item.is_promoted
+                      ? "border-2 border-emerald-600 bg-emerald-50"
+                      : "border border-zinc-200",
+                  )}
+                >
+                  {item.is_promoted && (
+                    <Badge className="absolute top-2 right-2 z-10 bg-emerald-700 text-white hover:bg-emerald-700">
+                      Destacado
+                    </Badge>
+                  )}
+                  {showOffer && (
+                    <Badge className="absolute top-2 left-2 z-10 bg-orange-600 text-white hover:bg-orange-600">
+                      Oferta {disc}%
+                    </Badge>
+                  )}
+
+                  {imgs[0] ? (
+                    <img
+                      src={imgs[0]}
+                      alt=""
+                      className="h-44 w-full object-cover"
+                    />
+                  ) : null}
+
+                  {imgs.length > 1 ? (
+                    <div className="flex gap-1 overflow-x-auto border-t border-zinc-200 bg-zinc-50 p-2">
+                      {imgs.slice(1).map((src) => (
+                        <img
+                          key={src}
+                          src={src}
+                          alt=""
+                          className="h-12 w-12 shrink-0 rounded object-cover ring-1 ring-zinc-200"
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <CardContent className="flex items-start justify-between gap-3 pt-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-slate-900">{item.title}</p>
+                      <p className="mt-1 text-sm text-slate-700">
+                        {item.description ?? "Sin descripcion"}
+                      </p>
+                      <div className="mt-2 space-y-1">
+                        {showConsultar ? (
+                          <p className="font-bold text-emerald-800">Consultar precio</p>
+                        ) : showOffer && priceVal != null ? (
+                          <>
+                            <p className="text-sm text-zinc-500 line-through">
+                              {formatARS(
+                                listingOriginalBeforeDiscount(priceVal, disc ?? 0),
+                              )}
+                            </p>
+                            <p className="font-semibold text-emerald-700">
+                              {formatARS(priceVal)}
+                            </p>
+                          </>
+                        ) : priceVal != null ? (
+                          <p className="font-semibold text-emerald-700">{formatARS(priceVal)}</p>
+                        ) : (
+                          <p className="font-bold text-emerald-800">Consultar precio</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                        render={<Link href={`/dashboard/catalogo/${item.id}/editar`} />}
+                        title="Editar"
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={() => handleDelete(item.id)}
+                        disabled={isPending}
+                        title="Eliminar"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       </CardContent>

@@ -88,7 +88,10 @@ export type Database = {
           shop_id: string;
           title: string;
           description: string | null;
-          price: number;
+          price: number | null;
+          discount_percentage: number | null;
+          is_promoted: boolean;
+          image_urls: Json;
           created_at: string;
         };
         Insert: {
@@ -96,7 +99,10 @@ export type Database = {
           shop_id: string;
           title: string;
           description?: string | null;
-          price: number;
+          price?: number | null;
+          discount_percentage?: number | null;
+          is_promoted?: boolean;
+          image_urls?: Json;
           created_at?: string;
         };
         Update: {
@@ -104,7 +110,10 @@ export type Database = {
           shop_id?: string;
           title?: string;
           description?: string | null;
-          price?: number;
+          price?: number | null;
+          discount_percentage?: number | null;
+          is_promoted?: boolean;
+          image_urls?: Json;
           created_at?: string;
         };
         Relationships: [
