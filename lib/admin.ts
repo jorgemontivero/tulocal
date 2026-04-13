@@ -1,14 +1,20 @@
+/** Límites alineados con la landing /precios; `black` es plan interno sin tope. */
 export const PLAN_LIMITS: Record<string, number> = {
-  bronce: 5,
-  plata: 50,
-  oro: Infinity,
+  bronce: 4,
+  plata: 20,
+  oro: 80,
+  black: Infinity,
 };
 
 export const PLAN_LABELS: Record<string, string> = {
   bronce: "Bronce",
   plata: "Plata",
   oro: "Oro",
+  black: "Black (interno)",
 };
+
+/** Límite por defecto si llega un `plan_type` desconocido (p. ej. datos viejos). */
+export const DEFAULT_PLAN_LIMIT = PLAN_LIMITS.bronce;
 
 export const STATUS_LABELS: Record<string, string> = {
   pending: "Pendiente",

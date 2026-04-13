@@ -68,8 +68,11 @@ export async function updateShopPlan(
       .select("id", { count: "exact", head: true })
       .eq("shop_id", shopId);
 
-    const limit = PLAN_LIMITS[planType] ?? 5;
-    if (count != null && count > limit) {
+    const limit = PLAN_LIMITS[planType];
+    if (limit === undefined) {
+      return { ok: false, error: "Plan no válido." };
+    }
+    if (limit !== Infinity && count != null && count > limit) {
       return {
         ok: false,
         error: `Este comercio tiene ${count} productos. El plan ${planType} permite hasta ${limit}.`,

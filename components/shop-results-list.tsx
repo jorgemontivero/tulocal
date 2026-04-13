@@ -133,7 +133,7 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
 
   let shopRows: unknown[] | null = null;
   let shopError: { message: string } | null = null;
-  let searchListings: SearchListing[] = [];
+  const searchListings: SearchListing[] = [];
   let hasMoreListings = false;
 
   const listingsOversample = LISTINGS_PAGE_SIZE * 3;

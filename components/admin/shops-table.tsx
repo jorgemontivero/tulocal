@@ -11,17 +11,20 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
+  DEFAULT_PLAN_LIMIT,
   PLAN_LABELS,
   PLAN_LIMITS,
   STATUS_LABELS,
@@ -43,6 +46,7 @@ const PLAN_COLORS: Record<string, string> = {
   bronce: "bg-orange-100 text-orange-800",
   plata: "bg-slate-200 text-slate-800",
   oro: "bg-yellow-100 text-yellow-800",
+  black: "bg-zinc-900 text-zinc-100",
 };
 
 function ShopRow({ shop: initial }: { shop: AdminShop }) {
@@ -50,7 +54,7 @@ function ShopRow({ shop: initial }: { shop: AdminShop }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const planLimit = PLAN_LIMITS[shop.plan_type] ?? 5;
+  const planLimit = PLAN_LIMITS[shop.plan_type] ?? DEFAULT_PLAN_LIMIT;
   const overLimit = shop.listing_count > planLimit;
 
   function handlePlanChange(plan: string | null) {
@@ -137,9 +141,16 @@ function ShopRow({ shop: initial }: { shop: AdminShop }) {
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="bronce">Bronce</SelectItem>
-            <SelectItem value="plata">Plata</SelectItem>
-            <SelectItem value="oro">Oro</SelectItem>
+            <SelectGroup>
+              <SelectLabel className="text-[10px]">Planes</SelectLabel>
+              <SelectItem value="bronce">Bronce</SelectItem>
+              <SelectItem value="plata">Plata</SelectItem>
+              <SelectItem value="oro">Oro</SelectItem>
+            </SelectGroup>
+            <SelectGroup>
+              <SelectLabel className="text-[10px]">Interno</SelectLabel>
+              <SelectItem value="black">Black (sin límite)</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>
@@ -268,6 +279,7 @@ export function ShopsTable({ shops: initial }: { shops: AdminShop[] }) {
                 <SelectItem value="bronce">Bronce</SelectItem>
                 <SelectItem value="plata">Plata</SelectItem>
                 <SelectItem value="oro">Oro</SelectItem>
+                <SelectItem value="black">Black</SelectItem>
               </SelectContent>
             </Select>
             <Select
