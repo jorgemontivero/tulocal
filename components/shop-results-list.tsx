@@ -255,8 +255,20 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
         <Card className="border border-red-200 bg-red-50">
           <CardHeader>
             <CardTitle>No pudimos cargar resultados</CardTitle>
-            <CardDescription>
-              Verificá la conexión y las políticas RLS en Supabase.
+            <CardDescription className="space-y-1">
+              <span className="block">
+                Verificá la conexión y las políticas RLS en Supabase. Si migraste
+                recientemente, ejecutá el script{" "}
+                <code className="rounded bg-red-100 px-1 text-xs">
+                  supabase/sql/2026-04-14_fix_profiles_and_admin_rls.sql
+                </code>{" "}
+                y aprobá shops/listings pendientes.
+              </span>
+              {process.env.NODE_ENV === "development" && (
+                <span className="block font-mono text-xs text-red-800">
+                  {shopError.message}
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
         </Card>

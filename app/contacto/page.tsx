@@ -45,7 +45,7 @@ export default function ContactoPage() {
         >
           <Image
             src="/logo-tulocal.png"
-            alt=""
+            alt="tulocal.com.ar"
             width={200}
             height={48}
             className="h-10 w-auto object-contain"

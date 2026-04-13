@@ -16,10 +16,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = "https://tulocal.com.ar";
+
 export const metadata: Metadata = {
-  title: "tulocal.com.ar | Directorio comercial de Catamarca",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "tulocal.com.ar — Directorio comercial de Catamarca",
+    template: "%s | tulocal.com.ar",
+  },
   description:
-    "Encuentra comercios, productos y servicios locales en Catamarca. Potenciando el comercio local.",
+    "Encontrá comercios, productos y servicios locales en Catamarca. El directorio que potencia el comercio de tu ciudad.",
+  keywords: [
+    "Catamarca",
+    "comercios locales",
+    "marketplace",
+    "directorio comercial",
+    "productos",
+    "servicios",
+    "Tu Local",
+  ],
+  authors: [{ name: "Jorge Luis Montivero" }],
+  creator: "tulocal.com.ar",
   icons: {
     icon: "/logo-tulocal.png",
     shortcut: "/logo-tulocal.png",
@@ -27,6 +44,37 @@ export const metadata: Metadata = {
   },
   verification: {
     google: "Ht1onVAS9SK-ODrLIQBPzsUpsk0GlGhtOhtZhOfilrw",
+  },
+  openGraph: {
+    type: "website",
+    locale: "es_AR",
+    url: SITE_URL,
+    siteName: "tulocal.com.ar",
+    title: "tulocal.com.ar — Directorio comercial de Catamarca",
+    description:
+      "Encontrá comercios, productos y servicios locales en Catamarca. El directorio que potencia el comercio de tu ciudad.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "tulocal.com.ar — Directorio comercial de Catamarca",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "tulocal.com.ar — Directorio comercial de Catamarca",
+    description:
+      "Encontrá comercios, productos y servicios locales en Catamarca.",
+    images: ["/og-image.png"],
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
@@ -37,7 +85,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="es-AR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-gray-100">

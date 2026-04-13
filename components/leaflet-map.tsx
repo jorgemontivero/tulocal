@@ -67,7 +67,7 @@ export default function LeafletMap({ shops, center, zoom }: LeafletMapProps) {
             <div className="flex items-start gap-3 py-1">
               <Avatar className="size-10 shrink-0 ring-1 ring-zinc-200">
                 {shop.logo_url ? (
-                  <AvatarImage src={shop.logo_url} alt="" />
+                  <AvatarImage src={shop.logo_url} alt={`Logo de ${shop.name}`} />
                 ) : null}
                 <AvatarFallback className="bg-emerald-100 text-sm font-semibold text-emerald-800">
                   {shop.name.slice(0, 1).toUpperCase()}

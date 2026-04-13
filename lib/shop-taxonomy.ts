@@ -41,50 +41,78 @@ export async function fetchShopTaxonomyForHome(supabase: SupabaseClient<Database
   categories: ShopTaxonomyCategoryWithCounts[];
   subcategories: ShopTaxonomySubcategoryWithCounts[];
 }> {
-  const [{ data: catRows, error: catErr }, { data: subRows, error: subErr }] = await Promise.all([
+  const [catRes, subRes] = await Promise.all([
     supabase.from("categories").select("id,name,business_type, shops(count)"),
     supabase.from("subcategories").select("id,category_id,name, shops(count)"),
   ]);
 
-  const categories: ShopTaxonomyCategoryWithCounts[] =
-    !catErr && catRows
-      ? catRows
-          .map((row) => {
-            const c = row as {
-              id: string;
-              name: string;
-              business_type: string;
-              shops?: unknown;
-            };
-            return {
-              id: c.id,
-              name: c.name,
-              business_type: c.business_type as "producto" | "servicio",
-              shop_count: parseShopsCount(c.shops),
-            };
-          })
-          .sort((a, b) => a.name.localeCompare(b.name, "es"))
-      : [];
+  if (catRes.error) {
+    console.error("[fetchShopTaxonomyForHome] categories embed:", catRes.error.message);
+  }
+  if (subRes.error) {
+    console.error("[fetchShopTaxonomyForHome] subcategories embed:", subRes.error.message);
+  }
 
-  const subcategories: ShopTaxonomySubcategoryWithCounts[] =
-    !subErr && subRows
-      ? subRows
-          .map((row) => {
-            const s = row as {
-              id: string;
-              category_id: string;
-              name: string;
-              shops?: unknown;
-            };
-            return {
-              id: s.id,
-              category_id: s.category_id,
-              name: s.name,
-              shop_count: parseShopsCount(s.shops),
-            };
-          })
-          .sort((a, b) => a.name.localeCompare(b.name, "es"))
-      : [];
+  if (catRes.error || subRes.error) {
+    const [plainCat, plainSub] = await Promise.all([
+      supabase.from("categories").select("id,name,business_type").order("name"),
+      supabase.from("subcategories").select("id,category_id,name").order("name"),
+    ]);
+
+    const categories: ShopTaxonomyCategoryWithCounts[] = (plainCat.data ?? []).map(
+      (c) => ({
+        id: c.id,
+        name: c.name,
+        business_type: c.business_type as "producto" | "servicio",
+        shop_count: 0,
+      }),
+    );
+
+    const subcategories: ShopTaxonomySubcategoryWithCounts[] = (plainSub.data ?? []).map(
+      (s) => ({
+        id: s.id,
+        category_id: s.category_id,
+        name: s.name,
+        shop_count: 0,
+      }),
+    );
+
+    return { categories, subcategories };
+  }
+
+  const categories: ShopTaxonomyCategoryWithCounts[] = (catRes.data ?? [])
+    .map((row) => {
+      const c = row as {
+        id: string;
+        name: string;
+        business_type: string;
+        shops?: unknown;
+      };
+      return {
+        id: c.id,
+        name: c.name,
+        business_type: c.business_type as "producto" | "servicio",
+        shop_count: parseShopsCount(c.shops),
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
+
+  const subcategories: ShopTaxonomySubcategoryWithCounts[] = (subRes.data ?? [])
+    .map((row) => {
+      const s = row as {
+        id: string;
+        category_id: string;
+        name: string;
+        shops?: unknown;
+      };
+      return {
+        id: s.id,
+        category_id: s.category_id,
+        name: s.name,
+        shop_count: parseShopsCount(s.shops),
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
 
   return { categories, subcategories };
 }

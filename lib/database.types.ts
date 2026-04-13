@@ -101,6 +101,9 @@ export type Database = {
           logo_url: string | null;
           latitude: number | null;
           longitude: number | null;
+          status: string;
+          plan_type: string;
+          is_featured: boolean;
           created_at: string;
         };
         Insert: {
@@ -119,6 +122,9 @@ export type Database = {
           logo_url?: string | null;
           latitude?: number | null;
           longitude?: number | null;
+          status?: string;
+          plan_type?: string;
+          is_featured?: boolean;
           created_at?: string;
         };
         Update: {
@@ -137,6 +143,9 @@ export type Database = {
           logo_url?: string | null;
           latitude?: number | null;
           longitude?: number | null;
+          status?: string;
+          plan_type?: string;
+          is_featured?: boolean;
           created_at?: string;
         };
         Relationships: [];
@@ -151,6 +160,7 @@ export type Database = {
           discount_percentage: number | null;
           is_promoted: boolean;
           image_urls: Json;
+          status: string;
           created_at: string;
         };
         Insert: {
@@ -162,6 +172,7 @@ export type Database = {
           discount_percentage?: number | null;
           is_promoted?: boolean;
           image_urls?: Json;
+          status?: string;
           created_at?: string;
         };
         Update: {
@@ -173,6 +184,7 @@ export type Database = {
           discount_percentage?: number | null;
           is_promoted?: boolean;
           image_urls?: Json;
+          status?: string;
           created_at?: string;
         };
         Relationships: [
@@ -184,6 +196,58 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      shop_events: {
+        Row: {
+          id: number;
+          shop_id: string;
+          event_type: string;
+          meta: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: never;
+          shop_id: string;
+          event_type: string;
+          meta?: Json;
+          created_at?: string;
+        };
+        Update: {
+          shop_id?: string;
+          event_type?: string;
+          meta?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shop_events_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      search_logs: {
+        Row: {
+          id: number;
+          query: string;
+          results: number;
+          filters: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: never;
+          query: string;
+          results?: number;
+          filters?: Json;
+          created_at?: string;
+        };
+        Update: {
+          query?: string;
+          results?: number;
+          filters?: Json;
+        };
+        Relationships: [];
       };
     };
     Views: {

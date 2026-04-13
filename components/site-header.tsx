@@ -76,7 +76,7 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
             <Link href="/" className="flex shrink-0 items-center gap-2 sm:gap-3">
               <Image
                 src="/logo-tulocal.png"
-                alt=""
+                alt="tulocal.com.ar — Directorio comercial de Catamarca"
                 width={220}
                 height={56}
                 className="h-9 w-auto object-contain drop-shadow sm:h-14"

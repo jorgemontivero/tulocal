@@ -14,16 +14,33 @@ import { createClient } from "@/utils/supabase/server";
 import { StorefrontGridLoadMore } from "@/components/storefront-grid-load-more";
 import type { StorefrontListing } from "@/app/actions/load-more-listings";
 import { LISTINGS_PAGE_SIZE } from "@/lib/constants";
+import { SiteFooter } from "@/components/site-footer";
+
+const SITE_URL = "https://tulocal.com.ar";
 
 type ShopPageProps = {
   params: Promise<{ slug: string }>;
 };
 
-function shortMetaDescription(description: string | null): string {
-  if (!description) {
-    return "Descubre productos y servicios de este comercio en tulocal.com.ar.";
+function shortMetaDescription(
+  name: string,
+  category: string | null,
+  description: string | null,
+  address: string | null,
+): string {
+  const parts: string[] = [];
+  if (description) {
+    const excerpt =
+      description.length > 120
+        ? `${description.slice(0, 120).trim()}…`
+        : description;
+    parts.push(excerpt);
   }
-  return description.length > 150 ? `${description.slice(0, 150).trim()}...` : description;
+  if (address) parts.push(`Dirección: ${address}.`);
+  if (parts.length === 0) {
+    return `Descubrí los productos y servicios de ${name}${category ? ` (${category})` : ""} en Catamarca — tulocal.com.ar.`;
+  }
+  return parts.join(" ");
 }
 
 function toWhatsAppUrl(whatsappNumber: string): string {
@@ -52,6 +69,55 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
+function buildLocalBusinessJsonLd(shop: {
+  name: string;
+  slug: string;
+  description: string | null;
+  category: string | null;
+  logo_url: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  whatsapp_number: string | null;
+}) {
+  const ld: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: shop.name,
+    url: `${SITE_URL}/${shop.slug}`,
+  };
+  if (shop.description) ld.description = shop.description;
+  if (shop.logo_url) ld.image = shop.logo_url;
+  if (shop.address) {
+    ld.address = {
+      "@type": "PostalAddress",
+      streetAddress: shop.address,
+      addressLocality: "San Fernando del Valle de Catamarca",
+      addressRegion: "Catamarca",
+      addressCountry: "AR",
+    };
+  }
+  if (shop.latitude != null && shop.longitude != null) {
+    ld.geo = {
+      "@type": "GeoCoordinates",
+      latitude: shop.latitude,
+      longitude: shop.longitude,
+    };
+  }
+  if (shop.whatsapp_number) {
+    const num = shop.whatsapp_number.replace(/\D/g, "");
+    ld.telephone = `+${num}`;
+    ld.contactPoint = {
+      "@type": "ContactPoint",
+      telephone: `+${num}`,
+      contactType: "customer service",
+      availableLanguage: "es",
+    };
+  }
+  if (shop.category) ld.additionalType = shop.category;
+  return ld;
+}
+
 export async function generateMetadata(
   { params }: ShopPageProps,
   _parent: ResolvingMetadata,
@@ -61,44 +127,52 @@ export async function generateMetadata(
 
   const { data: shop } = await supabase
     .from("shops")
-    .select("name,description,logo_url,slug")
+    .select("name,description,logo_url,slug,category,address")
     .eq("slug", slug)
     .maybeSingle();
 
   if (!shop) {
     return {
-      title: "No encontrado | tulocal.com.ar",
-      description: "El comercio que buscas no esta disponible.",
-      openGraph: {
-        title: "No encontrado | tulocal.com.ar",
-        description: "El comercio que buscas no esta disponible.",
-        url: `/${slug}`,
-      },
-      twitter: {
-        card: "summary",
-        title: "No encontrado | tulocal.com.ar",
-        description: "El comercio que buscas no esta disponible.",
-      },
+      title: "No encontrado",
+      description: "El comercio que buscás no está disponible.",
     };
   }
 
-  const title = `${shop.name} | tulocal.com.ar`;
-  const description = shortMetaDescription(shop.description);
+  const category = shop.category as string | null;
+  const address = shop.address as string | null;
+
+  const title = category
+    ? `${shop.name} — ${category} en Catamarca`
+    : shop.name;
+
+  const description = shortMetaDescription(
+    shop.name,
+    category,
+    shop.description,
+    address,
+  );
+
+  const canonicalUrl = `${SITE_URL}/${shop.slug}`;
 
   return {
     title,
     description,
+    alternates: { canonical: canonicalUrl },
     openGraph: {
+      type: "website",
       title,
       description,
-      url: `/${shop.slug}`,
-      images: shop.logo_url ? [{ url: shop.logo_url }] : [],
+      url: canonicalUrl,
+      siteName: "tulocal.com.ar",
+      images: shop.logo_url
+        ? [{ url: shop.logo_url, alt: `Logo de ${shop.name}` }]
+        : [{ url: "/og-image.png", width: 1200, height: 630 }],
     },
     twitter: {
       card: shop.logo_url ? "summary_large_image" : "summary",
       title,
       description,
-      images: shop.logo_url ? [shop.logo_url] : undefined,
+      images: shop.logo_url ? [shop.logo_url] : ["/og-image.png"],
     },
   };
 }
@@ -152,7 +226,24 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
 
   const hasMoreListings = (listingsRaw?.length ?? 0) === LISTINGS_PAGE_SIZE;
 
+  const jsonLd = buildLocalBusinessJsonLd({
+    name: shop.name,
+    slug,
+    description: shop.description,
+    category: shop.category as string | null,
+    logo_url: shop.logo_url,
+    address: shop.address as string | null,
+    latitude: shop.latitude != null ? Number(shop.latitude) : null,
+    longitude: shop.longitude != null ? Number(shop.longitude) : null,
+    whatsapp_number: shop.whatsapp_number,
+  });
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <main className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <Card className="border border-zinc-200 bg-white shadow-sm">
@@ -271,5 +362,7 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
         )}
       </div>
     </main>
+    <SiteFooter />
+    </>
   );
 }

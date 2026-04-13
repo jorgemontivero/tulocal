@@ -54,7 +54,7 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
               // eslint-disable-next-line @next/next/no-img-element -- URLs externas de logos de comercios
               <img
                 src={shop.logo_url}
-                alt=""
+                alt={`Logo de ${shop.name}`}
                 className="max-h-28 max-w-full object-contain"
               />
             ) : (
