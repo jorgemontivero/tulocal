@@ -32,8 +32,13 @@ export async function sendContactMessage(
     };
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = process.env.RESEND_API_KEY?.trim();
   if (!apiKey) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn(
+        "[contacto] Falta RESEND_API_KEY. Copiá .env.example a .env.local y definí la clave (re_...).",
+      );
+    }
     return {
       ok: false,
       error:
