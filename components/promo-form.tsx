@@ -5,7 +5,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2 } from "lucide-react";
 
-import { leadSchema, type LeadFormInput } from "@/lib/lead-schemas";
+import { leadSchema, type LeadFormValues } from "@/lib/lead-schemas";
 import { submitVisitorLead } from "@/app/actions/leads";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,8 +32,8 @@ const AGE_RANGE_OPTIONS = [
 const GENDER_OPTIONS = [
   { value: "femenino", label: "Femenino" },
   { value: "masculino", label: "Masculino" },
-  { value: "no_binario", label: "No binario" },
-  { value: "prefiero_no_decir", label: "Prefiero no decirlo" },
+  { value: "otro", label: "Otro" },
+  { value: "prefiero no decirlo", label: "Prefiero no decirlo" },
 ];
 
 interface PromoFormProps {
@@ -43,8 +43,9 @@ interface PromoFormProps {
 
 export function PromoForm({ source, onSuccess }: PromoFormProps) {
   const [serverError, setServerError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState("");
 
-  const form = useForm<LeadFormInput>({
+  const form = useForm<LeadFormValues>({
     resolver: zodResolver(leadSchema),
     defaultValues: {
       name: "",
@@ -60,7 +61,7 @@ export function PromoForm({ source, onSuccess }: PromoFormProps) {
 
   const onSubmit = form.handleSubmit(async (values) => {
     setServerError(null);
-    const result = await submitVisitorLead({ ...values, source });
+    const result = await submitVisitorLead({ ...values, source, honeypot });
     if ("error" in result) {
       setServerError(result.error);
       return;
@@ -70,6 +71,19 @@ export function PromoForm({ source, onSuccess }: PromoFormProps) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
+      {/* Honeypot anti-bot: usuarios reales no completan este campo */}
+      <div className="sr-only" aria-hidden>
+        <label htmlFor="lead-company">Empresa</label>
+        <input
+          id="lead-company"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+        />
+      </div>
+
       {/* Fila 1: Nombre */}
       <div className="space-y-1">
         <label

@@ -107,6 +107,8 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
 
   const safeTerm = term.replace(/[%_,]/g, " ").trim();
   const appliesTextFilter = term.length > 0 && safeTerm.length > 0;
+  const hasExploreFilters =
+    Boolean(typeFilter) || Boolean(catFilter) || Boolean(subcatFilter);
   const hasActiveFilters =
     appliesTextFilter ||
     Boolean(subcatFilter) ||
@@ -138,17 +140,22 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
 
   const listingsOversample = LISTINGS_PAGE_SIZE * 3;
 
-  if (appliesTextFilter) {
+  if (appliesTextFilter || hasExploreFilters) {
     const shopsQuery = buildShopsQuery().range(0, PAGE_SIZE - 1);
-    const listingsQuery = supabase
+    let listingsQuery = supabase
       .from("listings")
       .select(
         `id, title, price, image_urls, created_at,
          shops ( name, slug, logo_url, business_type, category_id, subcategory_id )`,
       )
-      .or(`title.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%`)
       .order("created_at", { ascending: false })
       .range(0, listingsOversample - 1);
+
+    if (appliesTextFilter) {
+      listingsQuery = listingsQuery.or(
+        `title.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%`,
+      );
+    }
 
     const [shopsRes, listingsRes] = await Promise.all([shopsQuery, listingsQuery]);
 
@@ -225,16 +232,17 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
     }
   }
 
-  const showMarketplaceLayout = appliesTextFilter;
+  const showMarketplaceLayout = appliesTextFilter || hasExploreFilters;
   const hasListings = searchListings.length > 0;
   const totalTextHitsEmpty =
     appliesTextFilter && shops.length === 0 && !hasListings && !shopError;
   const listingsLoadMoreFilters = {
-    q: safeTerm,
+    q: appliesTextFilter ? safeTerm : "",
     type: typeFilter || undefined,
     cat: catFilter || undefined,
     subcat: subcatFilter || undefined,
   };
+  const filtersKey = `${safeTerm}|${typeFilter}|${catFilter}|${subcatFilter}`;
 
   return (
     <section
@@ -291,6 +299,7 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
               <h3 className="mb-4 text-lg font-semibold text-zinc-900">Locales</h3>
               {shops.length > 0 ? (
                 <ShopGridLoadMore
+                  key={`shops-market-${filtersKey}`}
                   initialShops={shops}
                   initialHasMore={hasMoreShops}
                   filters={loadMoreFilters}
@@ -308,6 +317,7 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
                   Productos y servicios
                 </h3>
                 <ListingGridLoadMore
+                  key={`listings-market-${filtersKey}`}
                   initialListings={searchListings}
                   initialHasMore={hasMoreListings}
                   filters={listingsLoadMoreFilters}
@@ -318,6 +328,7 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
         )
       ) : shops.length > 0 ? (
         <ShopGridLoadMore
+          key={`shops-default-${filtersKey}`}
           initialShops={shops}
           initialHasMore={hasMoreShops}
           filters={loadMoreFilters}

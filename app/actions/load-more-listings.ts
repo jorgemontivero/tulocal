@@ -121,7 +121,6 @@ export async function loadMoreSearchListings(
   const supabase = await createClient();
 
   const safeTerm = input.q.replace(/[%_,]/g, " ").trim();
-  if (!safeTerm) return { listings: [], hasMore: false };
 
   const typeFilter =
     input.type && input.type !== "all" && isActiveType(input.type) ? input.type : "";
@@ -130,19 +129,28 @@ export async function loadMoreSearchListings(
   const subcatFilter =
     input.subcat && input.subcat !== "all" && isUuid(input.subcat) ? input.subcat : "";
 
+  // Si no hay término ni filtros, no hay contexto para listado de resultados.
+  if (!safeTerm && !typeFilter && !catFilter && !subcatFilter) {
+    return { listings: [], hasMore: false };
+  }
+
   const oversample = LISTINGS_PAGE_SIZE * 3;
   const from = input.offset;
   const to = from + oversample - 1;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("listings")
     .select(
       `id, title, price, image_urls, created_at,
        shops ( name, slug, logo_url, business_type, category_id, subcategory_id )`,
     )
-    .or(`title.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%`)
-    .order("created_at", { ascending: false })
-    .range(from, to);
+    .order("created_at", { ascending: false });
+
+  if (safeTerm) {
+    query = query.or(`title.ilike.%${safeTerm}%,description.ilike.%${safeTerm}%`);
+  }
+
+  const { data, error } = await query.range(from, to);
 
   if (error || !data) {
     return { listings: [], hasMore: false };

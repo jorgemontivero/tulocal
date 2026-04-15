@@ -10,9 +10,17 @@ export const leadSchema = z
       error: "Seleccioná un método de contacto.",
     }),
     contact_value: z.string().trim().min(1, "Ingresá tu dato de contacto."),
-    source: z.string().min(1),
-    age_range: z.string().optional(),
-    gender: z.string().optional(),
+    source: z.string().trim().min(1),
+    age_range: z
+      .enum(["18-24", "25-34", "35-44", "45+"])
+      .optional()
+      .or(z.literal(""))
+      .transform((v) => (v === "" ? undefined : v)),
+    gender: z
+      .enum(["masculino", "femenino", "otro", "prefiero no decirlo"])
+      .optional()
+      .or(z.literal(""))
+      .transform((v) => (v === "" ? undefined : v)),
   })
   .superRefine((data, ctx) => {
     if (data.contact_method === "email") {
@@ -37,4 +45,5 @@ export const leadSchema = z
     }
   });
 
-export type LeadFormInput = z.infer<typeof leadSchema>;
+export type LeadFormInput = z.output<typeof leadSchema>;
+export type LeadFormValues = z.input<typeof leadSchema>;

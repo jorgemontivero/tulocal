@@ -20,7 +20,7 @@ export default async function AdminLayout({
 
   if (!user) redirect("/login");
 
-  if (!(await isAdminUser(supabase, user))) redirect("/");
+  if (!(await isAdminUser(supabase, user))) redirect("/dashboard");
 
   return <>{children}</>;
 }

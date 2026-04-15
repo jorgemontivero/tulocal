@@ -258,7 +258,7 @@ export type Database = {
           age_range: string | null;
           gender: string | null;
           wants_promos: boolean;
-          source: string | null;
+          source: string;
           created_at: string;
         };
         Insert: {
@@ -269,7 +269,7 @@ export type Database = {
           age_range?: string | null;
           gender?: string | null;
           wants_promos?: boolean;
-          source?: string | null;
+          source: string;
           created_at?: string;
         };
         Update: {
@@ -290,7 +290,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      check_and_touch_lead_rate_limit: {
+        Args: {
+          p_client_ip: string;
+          p_max_hits?: number;
+          p_window_seconds?: number;
+        };
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;
