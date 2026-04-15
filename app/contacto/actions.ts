@@ -34,11 +34,9 @@ export async function sendContactMessage(
 
   const apiKey = process.env.RESEND_API_KEY?.trim();
   if (!apiKey) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn(
-        "[contacto] Falta RESEND_API_KEY. Copiá .env.example a .env.local y definí la clave (re_...).",
-      );
-    }
+    console.error(
+      "[contacto] Falta RESEND_API_KEY en el servidor. En Vercel: Settings → Environment Variables → Production, añadí RESEND_API_KEY y redeploy.",
+    );
     return {
       ok: false,
       error:
@@ -115,6 +113,7 @@ export async function sendContactMessage(
   });
 
   if (error) {
+    console.error("[contacto] Resend API:", error.message);
     return {
       ok: false,
       error:

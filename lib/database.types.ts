@@ -249,6 +249,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      visitor_leads: {
+        Row: {
+          id: string;
+          name: string;
+          contact_method: string;
+          contact_value: string;
+          age_range: string | null;
+          gender: string | null;
+          wants_promos: boolean;
+          source: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          contact_method: string;
+          contact_value: string;
+          age_range?: string | null;
+          gender?: string | null;
+          wants_promos?: boolean;
+          source?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          contact_method?: string;
+          contact_value?: string;
+          age_range?: string | null;
+          gender?: string | null;
+          wants_promos?: boolean;
+          source?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

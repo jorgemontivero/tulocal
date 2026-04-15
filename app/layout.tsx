@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CookieBanner } from "@/components/cookie-banner";
 import { SiteHeaderWrapper } from "@/components/site-header-wrapper";
+import { PromoPopup } from "@/components/promo-popup";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -94,6 +95,7 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
         <CookieBanner />
+        <PromoPopup />
       </body>
     </html>
   );
