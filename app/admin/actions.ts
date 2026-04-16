@@ -118,8 +118,19 @@ export async function deleteListingAsAdmin(listingId: string): Promise<ActionRes
       .eq("id", listingId)
       .maybeSingle();
 
-    const { error } = await supabase.from("listings").delete().eq("id", listingId);
+    const { data: deleted, error } = await supabase
+      .from("listings")
+      .delete()
+      .eq("id", listingId)
+      .select("id")
+      .maybeSingle();
     if (error) return { ok: false, error: error.message };
+    if (!deleted) {
+      return {
+        ok: false,
+        error: "No se pudo eliminar la publicacion. Verifica politicas RLS de admin.",
+      };
+    }
 
     revalidatePath("/admin");
     revalidatePath("/");

@@ -17,6 +17,7 @@ export type ShopCardShop = {
   description: string | null;
   logo_url: string | null;
   whatsapp_number: string | null;
+  plan_type: string | null;
 };
 
 function shortDescription(description: string | null): string {
@@ -41,15 +42,54 @@ export type ShopCardProps = {
   variant?: "default" | "directory";
 };
 
+function isPremiumPlan(planType: string | null | undefined): boolean {
+  return planType === "plata" || planType === "oro" || planType === "black";
+}
+
+function planBadge(planType: string | null | undefined): {
+  label: string;
+  className: string;
+} | null {
+  if (!planType) return null;
+  if (planType === "plata") {
+    return {
+      label: "Plan Plata",
+      className: "bg-slate-100 text-slate-800 border border-slate-300",
+    };
+  }
+  if (planType === "oro" || planType === "black") {
+    return {
+      label: "Plan Oro",
+      className: "bg-amber-100 text-amber-900 border border-amber-300",
+    };
+  }
+  return null;
+}
+
 export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
+  const premium = isPremiumPlan(shop.plan_type);
+  const premiumBadge = planBadge(shop.plan_type);
+
   if (variant === "directory") {
     return (
-      <Card className="h-full overflow-hidden border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+      <Card
+        className={`h-full overflow-hidden border bg-white shadow-sm transition-shadow hover:shadow-md ${
+          premium
+            ? "border-amber-300 bg-gradient-to-b from-amber-50 to-white ring-1 ring-amber-200/70"
+            : "border-zinc-200"
+        }`}
+      >
         <Link
           href={`/${shop.slug}`}
           className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2"
         >
-          <div className="relative flex h-36 w-full items-center justify-center bg-gradient-to-b from-slate-50 to-white px-4 pt-5 pb-2">
+          <div
+            className={`relative flex h-36 w-full items-center justify-center px-4 pt-5 pb-2 ${
+              premium
+                ? "bg-gradient-to-b from-amber-100/70 to-amber-50/40"
+                : "bg-gradient-to-b from-slate-50 to-white"
+            }`}
+          >
             {shop.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element -- URLs externas de logos de comercios
               <img
@@ -73,6 +113,11 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
             <CardDescription className="line-clamp-2 min-h-[2.5rem] text-center text-sm">
               {shortDescription(shop.description)}
             </CardDescription>
+            {premiumBadge && (
+              <div className="pt-1 text-center">
+                <Badge className={premiumBadge.className}>{premiumBadge.label}</Badge>
+              </div>
+            )}
           </CardHeader>
         </Link>
         <CardContent className="space-y-3 pb-5">
@@ -108,7 +153,13 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
   }
 
   return (
-    <Card className="h-full border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+    <Card
+      className={`h-full border bg-white shadow-sm transition-shadow hover:shadow-md ${
+        premium
+          ? "border-amber-300 bg-gradient-to-b from-amber-50 to-white ring-1 ring-amber-200/70"
+          : "border-zinc-200"
+      }`}
+    >
       <CardHeader>
         <div className="mb-2 flex items-center gap-3">
           <Avatar className="size-10">
@@ -124,6 +175,11 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
         <CardDescription className="line-clamp-2 min-h-[2.5rem]">
           {shortDescription(shop.description)}
         </CardDescription>
+        {premiumBadge && (
+          <div className="pt-1">
+            <Badge className={premiumBadge.className}>{premiumBadge.label}</Badge>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-3">
         <Badge className="bg-emerald-600 text-white">{rubroFromSlug(shop.slug)}</Badge>

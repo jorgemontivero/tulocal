@@ -43,6 +43,7 @@ type ShopEmbed = {
   name: string;
   slug: string;
   logo_url: string | null;
+  plan_type: string | null;
   business_type: string | null;
   category_id: string | null;
   subcategory_id: string | null;
@@ -68,6 +69,13 @@ function shopMatchesExploreFilters(
   if (catFilter && shop.category_id !== catFilter) return false;
   if (subcatFilter && shop.subcategory_id !== subcatFilter) return false;
   return true;
+}
+
+function planPriority(planType: string | null | undefined): number {
+  if (planType === "black") return 4;
+  if (planType === "oro") return 3;
+  if (planType === "plata") return 2;
+  return 1;
 }
 
 export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
@@ -145,12 +153,12 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
   const listingsOversample = LISTINGS_PAGE_SIZE * 3;
 
   if (appliesTextFilter || hasExploreFilters) {
-    const shopsQuery = buildShopsQuery().range(0, PAGE_SIZE - 1);
+    const shopsQuery = buildShopsQuery();
     let listingsQuery = supabase
       .from("listings")
       .select(
         `id, title, price, image_urls, created_at,
-         shops ( name, slug, logo_url, business_type, category_id, subcategory_id )`,
+         shops ( name, slug, logo_url, plan_type, business_type, category_id, subcategory_id )`,
       )
       .eq("status", "approved")
       .order("created_at", { ascending: false })
@@ -191,12 +199,12 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
         fetchedFull && searchListings.length === LISTINGS_PAGE_SIZE;
     }
   } else {
-    const res = await buildShopsQuery().range(0, PAGE_SIZE - 1);
+    const res = await buildShopsQuery();
     shopError = res.error;
     shopRows = res.data;
   }
 
-  const shops: ShopCardShop[] =
+  const shopsRaw =
     (shopRows as Record<string, unknown>[] | null)?.map((s) => ({
       id: String(s.id),
       name: String(s.name),
@@ -204,9 +212,33 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
       description: (s.description as string | null) ?? null,
       logo_url: (s.logo_url as string | null) ?? null,
       whatsapp_number: (s.whatsapp_number as string | null) ?? null,
+      plan_type: (s.plan_type as string | null) ?? null,
+      created_at: (s.created_at as string | null) ?? null,
     })) ?? [];
 
-  const hasMoreShops = (shopRows?.length ?? 0) === PAGE_SIZE;
+  const sortedShops = shopsRaw
+    .sort((a, b) => {
+      const pa = planPriority(a.plan_type);
+      const pb = planPriority(b.plan_type);
+      if (pb !== pa) return pb - pa;
+      const ta = a.created_at ? Date.parse(a.created_at) : 0;
+      const tb = b.created_at ? Date.parse(b.created_at) : 0;
+      return tb - ta;
+    });
+
+  const shops: ShopCardShop[] = sortedShops
+    .slice(0, PAGE_SIZE)
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      description: s.description,
+      logo_url: s.logo_url,
+      whatsapp_number: s.whatsapp_number,
+      plan_type: s.plan_type,
+    }));
+
+  const hasMoreShops = sortedShops.length > PAGE_SIZE;
   const loadMoreFilters = {
     q: appliesTextFilter ? safeTerm : undefined,
     type: typeFilter || undefined,

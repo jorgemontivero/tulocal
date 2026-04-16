@@ -15,6 +15,8 @@ import { StorefrontGridLoadMore } from "@/components/storefront-grid-load-more";
 import type { StorefrontListing } from "@/app/actions/load-more-listings";
 import { LISTINGS_PAGE_SIZE } from "@/lib/constants";
 import { SiteFooter } from "@/components/site-footer";
+import { parseListingImageUrls } from "@/lib/listing-display";
+import { ShopFlyersCarousel } from "@/components/shop-flyers-carousel";
 
 const SITE_URL = "https://tulocal.com.ar";
 
@@ -184,7 +186,7 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
 
   const { data: shop } = await supabase
     .from("shops")
-    .select("id,name,category,description,logo_url,whatsapp_number,instagram_username,address,latitude,longitude")
+    .select("id,name,category,description,logo_url,flyer_urls,whatsapp_number,instagram_username,address,latitude,longitude")
     .eq("slug", slug)
     .eq("status", "approved")
     .maybeSingle();
@@ -205,6 +207,9 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
   const embedMapUrl = hasCoordinates
     ? `https://maps.google.com/maps?q=${shop.latitude},${shop.longitude}&z=16&output=embed`
     : null;
+  const flyerUrls = parseListingImageUrls(
+    (shop as { flyer_urls?: unknown }).flyer_urls,
+  ).slice(0, 3);
 
   const { data: listingsRaw } = await supabase
     .from("listings")
@@ -301,6 +306,20 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
             ) : null}
           </CardHeader>
         </Card>
+
+        {flyerUrls.length > 0 && (
+          <Card className="overflow-hidden border border-zinc-200 bg-white shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Promociones del local</CardTitle>
+              <CardDescription>
+                Flyers y novedades destacadas de este comercio.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-4">
+              <ShopFlyersCarousel flyers={flyerUrls} />
+            </CardContent>
+          </Card>
+        )}
 
         {(shop.address || hasCoordinates) && (
           <Card className="overflow-hidden border border-zinc-200 bg-white shadow-sm">

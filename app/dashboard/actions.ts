@@ -28,6 +28,9 @@ export type ListingActionResult = {
   error?: string;
 };
 
+const MAX_SHOP_FLYERS = 3;
+const MAX_SHOP_FLYER_BYTES = 5 * 1024 * 1024;
+
 function slugify(input: string): string {
   return input
     .normalize("NFD")
@@ -47,6 +50,24 @@ function extFromFile(file: File): string {
   if (file.type === "image/webp") return "webp";
   if (file.type === "image/jpeg") return "jpg";
   return "jpg";
+}
+
+function uniqueShopFlyerPath(
+  userId: string,
+  batchId: string,
+  file: File,
+  index: number,
+): string {
+  const ext = extFromFile(file);
+  const rawBase = file.name.replace(/\.[^.]+$/, "");
+  const safe =
+    rawBase
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "flyer";
+  return `${userId}/shops/flyers/${batchId}/${index}-${crypto.randomUUID()}-${safe}.${ext}`;
 }
 
 /** Nombre de archivo seguro + extensión para paths en Storage (sin colisiones entre ítems). */
@@ -120,6 +141,39 @@ async function uploadListingImageFiles(
   }
 }
 
+async function uploadShopFlyerFiles(
+  supabase: SupabaseServer,
+  userId: string,
+  rawFiles: File[],
+): Promise<{ ok: true; urls: string[] } | { ok: false; error: string }> {
+  if (rawFiles.length === 0) return { ok: true, urls: [] };
+  const uploadBatchId = crypto.randomUUID();
+  try {
+    const urls = await Promise.all(
+      rawFiles.map(async (file, index) => {
+        const path = uniqueShopFlyerPath(userId, uploadBatchId, file, index);
+        const { error: uploadError } = await supabase.storage.from("shop-logos").upload(
+          path,
+          file,
+          {
+            upsert: false,
+            contentType: file.type || undefined,
+          },
+        );
+        if (uploadError) throw new Error(uploadError.message);
+        const { data: publicData } = supabase.storage.from("shop-logos").getPublicUrl(path);
+        return publicData.publicUrl;
+      }),
+    );
+    return { ok: true, urls };
+  } catch {
+    return {
+      ok: false,
+      error: "No pudimos subir uno de los flyers. Intenta nuevamente.",
+    };
+  }
+}
+
 export async function createShop(formData: FormData): Promise<CreateShopResult> {
   const parsed = newShopSchema.safeParse({
     name: formData.get("name"),
@@ -158,7 +212,7 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
   const slug = slugify(parsed.data.name);
   const { data: existingShop } = await supabase
     .from("shops")
-    .select("id,logo_url")
+    .select("id,logo_url,plan_type")
     .eq("vendor_id", user.id)
     .maybeSingle();
 
@@ -183,6 +237,36 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
 
     const { data: publicData } = supabase.storage.from("shop-logos").getPublicUrl(path);
     logoUrl = publicData.publicUrl;
+  }
+
+  const flyerFiles = formData
+    .getAll("flyers")
+    .filter((f): f is File => f instanceof File && f.size > 0)
+    .slice(0, MAX_SHOP_FLYERS);
+
+  for (const file of flyerFiles) {
+    if (!file.type.startsWith("image/")) {
+      return { ok: false, error: "Los flyers deben ser imagenes validas." };
+    }
+    if (file.size > MAX_SHOP_FLYER_BYTES) {
+      return { ok: false, error: "Cada flyer debe pesar como maximo 5MB." };
+    }
+  }
+
+  const allowsFlyers =
+    existingShop?.plan_type === "oro" || existingShop?.plan_type === "black";
+
+  let flyerUrls: string[] | null = null;
+  if (flyerFiles.length > 0) {
+    if (!allowsFlyers) {
+      return {
+        ok: false,
+        error: "Los flyers promocionales estan disponibles solo para plan Oro.",
+      };
+    }
+    const uploadedFlyers = await uploadShopFlyerFiles(supabase, user.id, flyerFiles);
+    if (!uploadedFlyers.ok) return { ok: false, error: uploadedFlyers.error };
+    flyerUrls = uploadedFlyers.urls;
   }
 
   const instagramUsername =
@@ -234,6 +318,7 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     instagram_username,
     description: parsed.data.description,
     logo_url: logoUrl,
+    flyer_urls: flyerUrls ?? undefined,
     address: locationAddress,
     latitude: locationLat,
     longitude: locationLng,
@@ -274,6 +359,15 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
       : supabase.from("shops").insert(legacyPayload);
     const third = await legacyQuery;
     error = third.error;
+  }
+
+  if (error?.message.includes("flyer_urls")) {
+    const { flyer_urls: _omitFlyers, ...withoutFlyers } = payload;
+    const retryQuery = existingShop
+      ? supabase.from("shops").update(withoutFlyers).eq("id", existingShop.id)
+      : supabase.from("shops").insert(withoutFlyers);
+    const second = await retryQuery;
+    error = second.error;
   }
 
   if (!error) {

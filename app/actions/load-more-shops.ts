@@ -25,6 +25,15 @@ export type LoadMoreShopsResult = {
   hasMore: boolean;
 };
 
+type RankedShop = ShopCardShop & { created_at: string | null };
+
+function planPriority(planType: string | null | undefined): number {
+  if (planType === "black") return 4;
+  if (planType === "oro") return 3;
+  if (planType === "plata") return 2;
+  return 1;
+}
+
 export async function loadMoreShops(
   input: LoadMoreShopsInput,
 ): Promise<LoadMoreShopsResult> {
@@ -60,20 +69,42 @@ export async function loadMoreShops(
 
   const from = input.offset;
   const to = from + PAGE_SIZE - 1;
-  const { data, error } = await q.range(from, to);
+  const { data, error } = await q;
 
   if (error || !data) {
     return { shops: [], hasMore: false };
   }
 
-  const shops: ShopCardShop[] = data.map((s) => ({
+  const allSorted: RankedShop[] = data
+    .map((s) => ({
+      id: String(s.id),
+      name: String(s.name),
+      slug: String(s.slug),
+      description: (s.description as string | null) ?? null,
+      logo_url: (s.logo_url as string | null) ?? null,
+      whatsapp_number: (s.whatsapp_number as string | null) ?? null,
+      plan_type: (s.plan_type as string | null) ?? null,
+      created_at: s.created_at as string | null,
+    }))
+    .sort((a, b) => {
+      const pa = planPriority(a.plan_type);
+      const pb = planPriority(b.plan_type);
+      if (pb !== pa) return pb - pa;
+      const ta = a.created_at ? Date.parse(a.created_at) : 0;
+      const tb = b.created_at ? Date.parse(b.created_at) : 0;
+      return tb - ta;
+    });
+
+  const page = allSorted.slice(from, to + 1);
+  const shops: ShopCardShop[] = page.map((s) => ({
     id: String(s.id),
     name: String(s.name),
     slug: String(s.slug),
-    description: (s.description as string | null) ?? null,
-    logo_url: (s.logo_url as string | null) ?? null,
-    whatsapp_number: (s.whatsapp_number as string | null) ?? null,
+    description: s.description,
+    logo_url: s.logo_url,
+    whatsapp_number: s.whatsapp_number,
+    plan_type: s.plan_type,
   }));
 
-  return { shops, hasMore: data.length === PAGE_SIZE };
+  return { shops, hasMore: to + 1 < allSorted.length };
 }

@@ -99,6 +99,7 @@ export type Database = {
           description: string | null;
           address: string | null;
           logo_url: string | null;
+          flyer_urls: Json;
           latitude: number | null;
           longitude: number | null;
           status: string;
@@ -120,6 +121,7 @@ export type Database = {
           description?: string | null;
           address?: string | null;
           logo_url?: string | null;
+          flyer_urls?: Json;
           latitude?: number | null;
           longitude?: number | null;
           status?: string;
@@ -141,6 +143,7 @@ export type Database = {
           description?: string | null;
           address?: string | null;
           logo_url?: string | null;
+          flyer_urls?: Json;
           latitude?: number | null;
           longitude?: number | null;
           status?: string;

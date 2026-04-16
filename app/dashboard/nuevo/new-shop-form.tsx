@@ -60,6 +60,8 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_SHOP_FLYERS = 3;
+const MAX_SHOP_FLYER_BYTES = 5 * 1024 * 1024;
 
 type InitialFieldValues = Partial<
   Pick<FormValues, "name" | "whatsapp" | "description" | "instagram" | "address" | "latitude" | "longitude">
@@ -92,6 +94,8 @@ export function NewShopForm({
   initialSubcategoryId,
   initialValues,
   initialLogoUrl,
+  initialPlanType,
+  initialFlyerUrls,
 }: {
   taxonomyCategories: ShopTaxonomyCategory[];
   taxonomySubcategories: ShopTaxonomySubcategory[];
@@ -100,12 +104,17 @@ export function NewShopForm({
   initialSubcategoryId?: string | null;
   initialValues?: InitialFieldValues;
   initialLogoUrl?: string;
+  initialPlanType?: string | null;
+  initialFlyerUrls?: string[];
 }) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [flyerError, setFlyerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
+  const [selectedFlyers, setSelectedFlyers] = useState<File[]>([]);
+  const canUploadFlyers = initialPlanType === "oro" || initialPlanType === "black";
 
   /** Cálculo síncrono antes de useForm: instante cero con el tipo correcto para el filtro de categorías. */
   const resolvedBusinessType = resolveInitialBusinessType(
@@ -140,6 +149,7 @@ export function NewShopForm({
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
     setFileError(null);
+    setFlyerError(null);
 
     const sub = taxonomySubcategories.find((s) => s.id === values.subcategory_id);
     if (!sub || sub.category_id !== values.category_id) {
@@ -150,6 +160,22 @@ export function NewShopForm({
     if (selectedLogo && selectedLogo.size > MAX_LOGO_SIZE_BYTES) {
       setFileError("La imagen supera los 5MB. Elige una foto mas liviana.");
       return;
+    }
+
+    if (selectedFlyers.length > MAX_SHOP_FLYERS) {
+      setFlyerError("Puedes subir hasta 3 flyers.");
+      return;
+    }
+
+    for (const file of selectedFlyers) {
+      if (!file.type.startsWith("image/")) {
+        setFlyerError("Los flyers deben ser imagenes validas.");
+        return;
+      }
+      if (file.size > MAX_SHOP_FLYER_BYTES) {
+        setFlyerError("Cada flyer debe pesar como maximo 5MB.");
+        return;
+      }
     }
 
     startTransition(async () => {
@@ -165,6 +191,11 @@ export function NewShopForm({
       if (values.latitude) formData.set("latitude", values.latitude);
       if (values.longitude) formData.set("longitude", values.longitude);
       if (selectedLogo) formData.set("logo", selectedLogo);
+      if (canUploadFlyers) {
+        for (const flyer of selectedFlyers) {
+          formData.append("flyers", flyer);
+        }
+      }
 
       const result = await createShop(formData);
       if (!result.ok) {
@@ -434,6 +465,57 @@ export function NewShopForm({
               <p className="text-xs text-slate-700">Opcional. Puedes cargarlo mas tarde.</p>
             )}
           </div>
+
+          {canUploadFlyers && (
+            <div className="space-y-1.5 rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+              <label className="text-sm font-semibold text-slate-900">
+                Flyers promocionales (hasta 3)
+              </label>
+              <Input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(event) => {
+                  setFlyerError(null);
+                  const files = Array.from(event.target.files ?? []).slice(0, MAX_SHOP_FLYERS);
+                  if (files.length > MAX_SHOP_FLYERS) {
+                    setFlyerError("Puedes subir hasta 3 flyers.");
+                    return;
+                  }
+                  for (const file of files) {
+                    if (!file.type.startsWith("image/")) {
+                      setFlyerError("Los flyers deben ser imagenes validas.");
+                      event.currentTarget.value = "";
+                      setSelectedFlyers([]);
+                      return;
+                    }
+                    if (file.size > MAX_SHOP_FLYER_BYTES) {
+                      setFlyerError("Cada flyer debe pesar como maximo 5MB.");
+                      event.currentTarget.value = "";
+                      setSelectedFlyers([]);
+                      return;
+                    }
+                  }
+                  setSelectedFlyers(files);
+                }}
+              />
+              {flyerError && <p className="text-xs text-red-600">{flyerError}</p>}
+              {selectedFlyers.length > 0 ? (
+                <p className="text-xs text-slate-700">
+                  {selectedFlyers.length} flyer(s) seleccionado(s).
+                </p>
+              ) : (initialFlyerUrls?.length ?? 0) > 0 ? (
+                <p className="text-xs text-slate-700">
+                  Ya tienes {(initialFlyerUrls?.length ?? 0)} flyer(s) cargado(s). Si subes nuevos,
+                  se reemplazan.
+                </p>
+              ) : (
+                <p className="text-xs text-slate-700">
+                  Se muestran en carrusel en tu página pública.
+                </p>
+              )}
+            </div>
+          )}
 
           {serverError && <p className="text-sm text-red-600">{serverError}</p>}
 

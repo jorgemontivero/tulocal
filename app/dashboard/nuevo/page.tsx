@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { NewShopForm } from "./new-shop-form";
 import { fetchShopTaxonomy } from "@/lib/shop-taxonomy";
 import { createClient } from "@/utils/supabase/server";
+import { parseListingImageUrls } from "@/lib/listing-display";
 
 export default async function NewShopPage() {
   const supabase = await createClient();
@@ -29,6 +30,8 @@ export default async function NewShopPage() {
         instagram_username?: string | null;
         description?: string | null;
         logo_url?: string | null;
+        plan_type?: string | null;
+        flyer_urls?: unknown;
       }
     | null;
 
@@ -50,6 +53,8 @@ export default async function NewShopPage() {
             description: shopData?.description ?? "",
           }}
           initialLogoUrl={shopData?.logo_url ?? undefined}
+          initialPlanType={shopData?.plan_type ?? null}
+          initialFlyerUrls={parseListingImageUrls(shopData?.flyer_urls)}
         />
       </div>
     </main>
