@@ -56,6 +56,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const whatsapp =
     (shop as { whatsapp_number?: string | null } | null)?.whatsapp_number ?? null;
   const logoUrl = (shop as { logo_url?: string | null } | null)?.logo_url ?? null;
+  const shopSlug = (shop as { slug?: string | null } | null)?.slug ?? null;
   const initial = (shop?.name ?? "L").slice(0, 1).toUpperCase();
   const { data: listings } = shop
     ? await supabase
@@ -159,15 +160,25 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 <p className="text-sm text-slate-700">WhatsApp</p>
                 <p className="font-semibold text-slate-900">{whatsapp ?? "No configurado"}</p>
 
-                <Button
-                  render={
-                    <Link href="/dashboard/nuevo" />
-                  }
-                  variant="outline"
-                  className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
-                >
-                  Editar Datos
-                </Button>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button
+                    render={
+                      <Link href="/dashboard/nuevo" />
+                    }
+                    variant="outline"
+                    className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+                  >
+                    Editar Datos
+                  </Button>
+                  {shopSlug ? (
+                    <Button
+                      render={<Link href={`/${shopSlug}`} />}
+                      className="bg-emerald-600 text-white hover:bg-emerald-700"
+                    >
+                      Ver mi catálogo público
+                    </Button>
+                  ) : null}
+                </div>
               </CardContent>
             </Card>
 

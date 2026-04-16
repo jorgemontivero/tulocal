@@ -17,10 +17,19 @@ export function ShopFlyersCarousel({ flyers }: { flyers: string[] }) {
   }, [flyers.length]);
 
   if (flyers.length === 0) return null;
+  const canNavigate = flyers.length > 1;
+
+  const showPrev = () => {
+    setIndex((current) => (current - 1 + flyers.length) % flyers.length);
+  };
+
+  const showNext = () => {
+    setIndex((current) => (current + 1) % flyers.length);
+  };
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100">
-      <div className="relative h-56 w-full sm:h-72">
+      <div className="relative aspect-[2/1] w-full bg-white">
         {flyers.map((src, i) => (
           // eslint-disable-next-line @next/next/no-img-element -- URLs externas de storage
           <img
@@ -29,14 +38,35 @@ export function ShopFlyersCarousel({ flyers }: { flyers: string[] }) {
             alt={`Flyer ${i + 1}`}
             loading={i === 0 ? "eager" : "lazy"}
             className={cn(
-              "absolute inset-0 h-full w-full object-cover transition-opacity duration-500",
+              "absolute inset-0 h-full w-full object-contain transition-opacity duration-500",
               i === index ? "opacity-100" : "opacity-0",
             )}
           />
         ))}
       </div>
 
-      {flyers.length > 1 && (
+      {canNavigate && (
+        <>
+          <button
+            type="button"
+            aria-label="Flyer anterior"
+            onClick={showPrev}
+            className="absolute top-1/2 left-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-lg font-semibold text-white transition-colors hover:bg-black/60"
+          >
+            <span aria-hidden>‹</span>
+          </button>
+          <button
+            type="button"
+            aria-label="Flyer siguiente"
+            onClick={showNext}
+            className="absolute top-1/2 right-2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-lg font-semibold text-white transition-colors hover:bg-black/60"
+          >
+            <span aria-hidden>›</span>
+          </button>
+        </>
+      )}
+
+      {canNavigate && (
         <div className="absolute right-0 bottom-2 left-0 flex justify-center gap-2">
           {flyers.map((_, i) => (
             <button
