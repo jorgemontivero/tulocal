@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Shield,
   Store,
+  ShoppingBag,
   BarChart3,
   LogOut,
   Menu,
@@ -16,12 +17,14 @@ import type { AdminData, AdminSection } from "@/lib/admin";
 import { KpiCards } from "@/components/admin/kpi-cards";
 import { ModerationQueue } from "@/components/admin/moderation-queue";
 import { ShopsTable } from "@/components/admin/shops-table";
+import { ListingsManager } from "@/components/admin/listings-manager";
 import { AnalyticsSection } from "@/components/admin/analytics-section";
 
 const NAV_ITEMS: { key: AdminSection; label: string; icon: React.ElementType }[] = [
   { key: "resumen", label: "Resumen", icon: LayoutDashboard },
   { key: "moderacion", label: "Moderación", icon: Shield },
   { key: "comercios", label: "Comercios", icon: Store },
+  { key: "productos", label: "Productos", icon: ShoppingBag },
   { key: "analytics", label: "Analytics", icon: BarChart3 },
 ];
 
@@ -148,6 +151,9 @@ export function AdminDashboard({ data }: { data: AdminData }) {
             />
           )}
           {section === "comercios" && <ShopsTable shops={data.allShops} />}
+          {section === "productos" && (
+            <ListingsManager listings={data.managedListings} />
+          )}
           {section === "analytics" && (
             <AnalyticsSection
               shopStats={data.shopStats}

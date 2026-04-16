@@ -48,6 +48,7 @@ export async function loadMoreStorefrontListings(
     .from("listings")
     .select("id,title,description,price,discount_percentage,is_promoted,image_urls")
     .eq("shop_id", input.shopId)
+    .eq("status", "approved")
     .order("is_promoted", { ascending: false })
     .order("created_at", { ascending: false })
     .range(from, to);
@@ -144,6 +145,7 @@ export async function loadMoreSearchListings(
       `id, title, price, image_urls, created_at,
        shops ( name, slug, logo_url, business_type, category_id, subcategory_id )`,
     )
+    .eq("status", "approved")
     .order("created_at", { ascending: false });
 
   if (safeTerm) {

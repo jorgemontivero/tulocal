@@ -61,9 +61,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     ? await supabase
         .from("listings")
         .select(
-          "id,title,description,price,discount_percentage,is_promoted,image_urls",
+          "id,title,description,price,discount_percentage,is_promoted,image_urls,status",
         )
         .eq("shop_id", shop.id)
+        .neq("status", "blocked")
         .order("is_promoted", { ascending: false })
         .order("created_at", { ascending: false })
     : { data: [] };

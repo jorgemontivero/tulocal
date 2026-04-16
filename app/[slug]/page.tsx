@@ -129,6 +129,7 @@ export async function generateMetadata(
     .from("shops")
     .select("name,description,logo_url,slug,category,address")
     .eq("slug", slug)
+    .eq("status", "approved")
     .maybeSingle();
 
   if (!shop) {
@@ -185,6 +186,7 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
     .from("shops")
     .select("id,name,category,description,logo_url,whatsapp_number,instagram_username,address,latitude,longitude")
     .eq("slug", slug)
+    .eq("status", "approved")
     .maybeSingle();
 
   if (!shop) {
@@ -208,6 +210,7 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
     .from("listings")
     .select("id,title,description,price,discount_percentage,is_promoted,image_urls")
     .eq("shop_id", shop.id)
+    .eq("status", "approved")
     .order("is_promoted", { ascending: false })
     .order("created_at", { ascending: false })
     .range(0, LISTINGS_PAGE_SIZE - 1);

@@ -1,3 +1,5 @@
+import type { Json } from "@/lib/database.types";
+
 /** Límites alineados con la landing /precios; `black` es plan interno sin tope. */
 export const PLAN_LIMITS: Record<string, number> = {
   bronce: 4,
@@ -22,7 +24,12 @@ export const STATUS_LABELS: Record<string, string> = {
   blocked: "Bloqueado",
 };
 
-export type AdminSection = "resumen" | "moderacion" | "comercios" | "analytics";
+export type AdminSection =
+  | "resumen"
+  | "moderacion"
+  | "comercios"
+  | "productos"
+  | "analytics";
 
 export type AdminShop = {
   id: string;
@@ -46,8 +53,27 @@ export type PendingShop = {
 export type PendingListing = {
   id: string;
   title: string;
+  description: string | null;
+  price: number | null;
+  discount_percentage: number | null;
+  is_promoted: boolean;
+  image_urls: Json;
   created_at: string;
   shop: { name: string } | null;
+};
+
+export type ManagedListing = {
+  id: string;
+  shop_id: string;
+  title: string;
+  description: string | null;
+  price: number | null;
+  discount_percentage: number | null;
+  is_promoted: boolean;
+  image_urls: Json;
+  status: string;
+  created_at: string;
+  shop: { name: string; slug: string; vendor_id: string } | null;
 };
 
 export type ShopStat = {
@@ -85,6 +111,7 @@ export type AdminData = {
   kpis: AdminKPIs;
   pendingShops: PendingShop[];
   pendingListings: PendingListing[];
+  managedListings: ManagedListing[];
   allShops: AdminShop[];
   shopStats: ShopStat[];
   topSearches: TopSearch[];

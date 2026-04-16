@@ -48,6 +48,7 @@ export async function loadMoreShops(
   let q = supabase
     .from("shops")
     .select("*")
+    .eq("status", "approved")
     .order("created_at", { ascending: false });
 
   if (typeFilter) q = q.eq("business_type", typeFilter);

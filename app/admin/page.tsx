@@ -6,6 +6,7 @@ import type {
   AdminShop,
   PendingShop,
   PendingListing,
+  ManagedListing,
   ShopStat,
   TopSearch,
   CategoryView,
@@ -19,6 +20,7 @@ async function fetchAdminData(): Promise<AdminData> {
     shopsRes,
     pendingShopsRes,
     pendingListingsRes,
+    managedListingsRes,
     activeListingsRes,
     topSearchesRes,
     shopStatsRes,
@@ -41,10 +43,20 @@ async function fetchAdminData(): Promise<AdminData> {
 
     supabase
       .from("listings")
-      .select("id,title,created_at,shops(name)")
+      .select(
+        "id,title,description,price,discount_percentage,is_promoted,image_urls,created_at,shops(name)",
+      )
       .eq("status", "pending")
       .order("created_at", { ascending: true })
       .limit(50),
+
+    supabase
+      .from("listings")
+      .select(
+        "id,shop_id,title,description,price,discount_percentage,is_promoted,image_urls,status,created_at,shops(name,slug,vendor_id)",
+      )
+      .order("created_at", { ascending: false })
+      .limit(1000),
 
     supabase
       .from("listings")
@@ -166,8 +178,29 @@ async function fetchAdminData(): Promise<AdminData> {
   ).map((l) => ({
     id: l.id,
     title: l.title,
+    description: (l.description as string | null) ?? null,
+    price: l.price != null ? Number(l.price) : null,
+    discount_percentage: l.discount_percentage != null ? Number(l.discount_percentage) : null,
+    is_promoted: Boolean(l.is_promoted),
+    image_urls: l.image_urls,
     created_at: l.created_at,
     shop: l.shops as unknown as { name: string } | null,
+  }));
+
+  const managedListings: ManagedListing[] = (
+    managedListingsRes.data ?? []
+  ).map((l) => ({
+    id: l.id,
+    shop_id: l.shop_id,
+    title: l.title,
+    description: (l.description as string | null) ?? null,
+    price: l.price != null ? Number(l.price) : null,
+    discount_percentage: l.discount_percentage != null ? Number(l.discount_percentage) : null,
+    is_promoted: Boolean(l.is_promoted),
+    image_urls: l.image_urls,
+    status: String(l.status),
+    created_at: l.created_at,
+    shop: l.shops as unknown as { name: string; slug: string; vendor_id: string } | null,
   }));
 
   const kpis: AdminKPIs = {
@@ -184,6 +217,7 @@ async function fetchAdminData(): Promise<AdminData> {
     kpis,
     pendingShops: (pendingShopsRes.data ?? []) as PendingShop[],
     pendingListings,
+    managedListings,
     allShops,
     shopStats,
     topSearches,

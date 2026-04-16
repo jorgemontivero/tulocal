@@ -116,7 +116,11 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
     Boolean(typeFilter);
 
   function buildShopsQuery() {
-    let q = supabase.from("shops").select("*").order("created_at", { ascending: false });
+    let q = supabase
+      .from("shops")
+      .select("*")
+      .eq("status", "approved")
+      .order("created_at", { ascending: false });
 
     if (typeFilter) {
       q = q.eq("business_type", typeFilter);
@@ -148,6 +152,7 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
         `id, title, price, image_urls, created_at,
          shops ( name, slug, logo_url, business_type, category_id, subcategory_id )`,
       )
+      .eq("status", "approved")
       .order("created_at", { ascending: false })
       .range(0, listingsOversample - 1);
 
