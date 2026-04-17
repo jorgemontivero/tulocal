@@ -186,13 +186,13 @@ export function HomeExploreSection({
 
   return (
     <section
-      className="mb-8 rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm sm:p-8"
+      className="mb-8 rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-8"
       aria-labelledby="explorar-titulo"
     >
-      <h2 id="explorar-titulo" className="text-lg font-semibold text-zinc-900 sm:text-xl">
+      <h2 id="explorar-titulo" className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 sm:text-xl">
         Explorá por categoría
       </h2>
-      <p className="mt-1 text-sm text-zinc-600">
+      <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
         Elegí si buscás productos o servicios y refiná con categoría y subcategoría.
       </p>
 
@@ -203,8 +203,8 @@ export function HomeExploreSection({
           className={cn(
             "rounded-2xl border-2 px-5 py-4 text-left text-base font-semibold transition-colors",
             tab === "producto"
-              ? "border-emerald-600 bg-emerald-50 text-emerald-900 shadow-sm"
-              : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-emerald-300/80",
+              ? "border-emerald-600 bg-emerald-50 text-emerald-900 shadow-sm dark:border-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-100"
+              : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-emerald-300/80 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-emerald-500/80",
           )}
         >
           Comprar Productos
@@ -215,8 +215,8 @@ export function HomeExploreSection({
           className={cn(
             "rounded-2xl border-2 px-5 py-4 text-left text-base font-semibold transition-colors",
             tab === "servicio"
-              ? "border-emerald-600 bg-emerald-50 text-emerald-900 shadow-sm"
-              : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-emerald-300/80",
+              ? "border-emerald-600 bg-emerald-50 text-emerald-900 shadow-sm dark:border-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-100"
+              : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-emerald-300/80 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-emerald-500/80",
           )}
         >
           Contratar Servicios
@@ -225,19 +225,19 @@ export function HomeExploreSection({
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
         <div className="min-w-0 flex-1 space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          <label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             Categoría
           </label>
           {categories.length === 0 ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Las categorías se cargarán pronto. Si sos desarrollador, ejecutá{" "}
-              <code className="rounded bg-zinc-100 px-1 text-xs">npm run seed:categories</code>.
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">npm run seed:categories</code>.
             </p>
           ) : categoriesForTab.length === 0 ? (
-            <p className="text-sm text-zinc-500">No hay categorías para este tipo aún.</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">No hay categorías para este tipo aún.</p>
           ) : (
             <Select value={currentCategoryId} onValueChange={onCategoryChange}>
-              <SelectTrigger className="h-11 w-full min-w-0 bg-white">
+              <SelectTrigger className="h-11 w-full min-w-0 bg-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
                 <SelectValue placeholder="Todas las categorías">{categoryTriggerLabel}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -253,12 +253,12 @@ export function HomeExploreSection({
         </div>
 
         <div className="min-w-0 flex-1 space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          <label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             Subcategoría
           </label>
           <Select value={currentSubcategoryId} onValueChange={onSubcategoryChange}>
             <SelectTrigger
-              className="h-11 w-full min-w-0 bg-white disabled:cursor-not-allowed disabled:bg-zinc-50"
+              className="h-11 w-full min-w-0 bg-white disabled:cursor-not-allowed disabled:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:disabled:bg-zinc-800"
               disabled={categorySelectValue === "all"}
             >
               <SelectValue placeholder="Todas las subcategorías">{subTriggerLabel}</SelectValue>
@@ -273,7 +273,7 @@ export function HomeExploreSection({
             </SelectContent>
           </Select>
           {categorySelectValue !== "all" && subcategoriesForCategory.length === 0 && (
-            <p className="text-xs text-zinc-500">No hay subcategorías cargadas para esta categoría.</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">No hay subcategorías cargadas para esta categoría.</p>
           )}
         </div>
       </div>

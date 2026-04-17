@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CookieBanner } from "@/components/cookie-banner";
 import { SiteHeaderWrapper } from "@/components/site-header-wrapper";
 import { PromoPopup } from "@/components/promo-popup";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -87,15 +88,24 @@ export default function RootLayout({
   return (
     <html
       lang="es-AR"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background">
-        <SiteHeaderWrapper />
-        {children}
-        <Analytics />
-        <SpeedInsights />
-        <CookieBanner />
-        <PromoPopup />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('theme');if(t==='dark'){document.documentElement.classList.add('dark')}else{document.documentElement.classList.remove('dark')}}catch(e){}",
+          }}
+        />
+        <ThemeProvider>
+          <SiteHeaderWrapper />
+          {children}
+          <Analytics />
+          <SpeedInsights />
+          <CookieBanner />
+          <PromoPopup />
+        </ThemeProvider>
       </body>
     </html>
   );

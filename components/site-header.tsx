@@ -5,9 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Poppins } from "next/font/google";
-import { LayoutDashboard, Menu, Search, X } from "lucide-react";
+import { LayoutDashboard, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/search-bar";
+import { useTheme } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 
 const brandSans = Poppins({
@@ -41,6 +42,7 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
   const pathname = usePathname();
   const isLogin = pathname === "/login";
   const showNavSearch = pathname !== "/";
+  const { theme, toggleTheme } = useTheme();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -48,8 +50,14 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   useEffect(() => {
-    closeDrawer();
-    setSearchOpen(false);
+    const resetUiState = window.setTimeout(() => {
+      closeDrawer();
+      setSearchOpen(false);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(resetUiState);
+    };
   }, [pathname, closeDrawer]);
 
   useEffect(() => {
@@ -67,9 +75,15 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
     return null;
   }
 
+  const isDarkMode = theme === "dark";
+  const ThemeIcon = isDarkMode ? Sun : Moon;
+  const themeButtonLabel = isDarkMode
+    ? "Activar modo claro"
+    : "Activar modo oscuro";
+
   return (
     <>
-      <header className="border-b border-emerald-950/30 bg-emerald-800 text-white shadow-sm">
+      <header className="border-b border-emerald-950/30 bg-emerald-800 text-white shadow-sm dark:border-emerald-200/10 dark:bg-emerald-950">
         <div className="mx-auto w-full max-w-7xl px-3 py-3 sm:px-4 sm:py-4">
           <div className="flex flex-row flex-nowrap items-center justify-between gap-2">
             {/* Logo */}
@@ -122,18 +136,27 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
                   {link.label}
                 </Link>
               ))}
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="flex size-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 text-white transition-colors hover:bg-white/20"
+                aria-label={themeButtonLabel}
+                title={themeButtonLabel}
+              >
+                <ThemeIcon className="size-5" />
+              </button>
               {isLoggedIn ? (
                 <Button
                   render={<Link href="/dashboard" />}
-                  className="border border-white/20 bg-white px-4 text-emerald-800 shadow-sm hover:bg-emerald-50"
+                  className="border border-white/20 bg-white px-4 text-emerald-800 shadow-sm hover:bg-emerald-50 dark:border-emerald-300/30 dark:bg-emerald-200 dark:text-emerald-950 dark:hover:bg-emerald-100"
                 >
-                  <LayoutDashboard className="text-emerald-800" />
+                  <LayoutDashboard className="text-emerald-800 dark:text-emerald-950" />
                   Mi Panel
                 </Button>
               ) : (
                 <Button
                   render={<Link href="/login" />}
-                  className="border border-white/20 bg-white px-4 text-emerald-800 shadow-sm hover:bg-emerald-50"
+                  className="border border-white/20 bg-white px-4 text-emerald-800 shadow-sm hover:bg-emerald-50 dark:border-emerald-300/30 dark:bg-emerald-200 dark:text-emerald-950 dark:hover:bg-emerald-100"
                 >
                   Acceso Vendedores
                 </Button>
@@ -142,6 +165,15 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
 
             {/* Mobile action buttons */}
             <div className="flex shrink-0 items-center gap-1 lg:hidden">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="flex size-10 items-center justify-center rounded-lg text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label={themeButtonLabel}
+                title={themeButtonLabel}
+              >
+                <ThemeIcon className="size-5" />
+              </button>
               {showNavSearch && !searchOpen && (
                 <button
                   type="button"
@@ -187,7 +219,7 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
 
           {/* Panel */}
           <nav
-            className="absolute top-0 right-0 flex h-full w-72 max-w-[85vw] flex-col bg-emerald-800 shadow-2xl animate-in slide-in-from-right duration-200"
+            className="absolute top-0 right-0 flex h-full w-72 max-w-[85vw] flex-col bg-emerald-800 shadow-2xl animate-in slide-in-from-right duration-200 dark:bg-emerald-950"
             aria-label="Menú principal"
           >
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
@@ -223,18 +255,27 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
             </div>
 
             <div className="border-t border-white/10 px-4 py-5">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20"
+                aria-label={themeButtonLabel}
+              >
+                <ThemeIcon className="size-4" />
+                {isDarkMode ? "Usar modo claro" : "Usar modo oscuro"}
+              </button>
               {isLoggedIn ? (
                 <Button
                   render={<Link href="/dashboard" onClick={closeDrawer} />}
-                  className="w-full justify-center border border-white/20 bg-white text-emerald-800 shadow-sm hover:bg-emerald-50"
+                  className="w-full justify-center border border-white/20 bg-white text-emerald-800 shadow-sm hover:bg-emerald-50 dark:border-emerald-300/30 dark:bg-emerald-200 dark:text-emerald-950 dark:hover:bg-emerald-100"
                 >
-                  <LayoutDashboard className="text-emerald-800" />
+                  <LayoutDashboard className="text-emerald-800 dark:text-emerald-950" />
                   Mi Panel
                 </Button>
               ) : (
                 <Button
                   render={<Link href="/login" onClick={closeDrawer} />}
-                  className="w-full justify-center border border-white/20 bg-white text-emerald-800 shadow-sm hover:bg-emerald-50"
+                  className="w-full justify-center border border-white/20 bg-white text-emerald-800 shadow-sm hover:bg-emerald-50 dark:border-emerald-300/30 dark:bg-emerald-200 dark:text-emerald-950 dark:hover:bg-emerald-100"
                 >
                   Acceso Vendedores
                 </Button>
