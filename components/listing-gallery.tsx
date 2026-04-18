@@ -33,8 +33,10 @@ export function ListingGallery({ imageUrls }: ListingGalleryProps) {
   }, [imgs.length, updateIndexFromScroll]);
 
   useEffect(() => {
-    setActiveIndex(0);
     scrollRef.current?.scrollTo({ left: 0 });
+    queueMicrotask(() => {
+      setActiveIndex(0);
+    });
   }, [urlsKey]);
 
   const goTo = useCallback(
@@ -51,7 +53,7 @@ export function ListingGallery({ imageUrls }: ListingGalleryProps) {
 
   if (imgs.length === 0) {
     return (
-      <div className="flex h-44 w-full items-center justify-center bg-zinc-200 text-sm font-medium text-zinc-500">
+      <div className="flex h-44 w-full items-center justify-center bg-zinc-200 text-sm font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
         Sin imagen
       </div>
     );
@@ -98,9 +100,9 @@ export function ListingGallery({ imageUrls }: ListingGalleryProps) {
         disabled={!canPrev}
         onClick={() => goTo(activeIndex - 1)}
         className={cn(
-          "absolute top-1/2 left-2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/85 text-zinc-800 shadow-sm backdrop-blur-sm transition-opacity",
+          "absolute top-1/2 left-2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/85 text-zinc-800 shadow-sm backdrop-blur-sm transition-opacity dark:border-zinc-600 dark:bg-zinc-900/90 dark:text-zinc-100 dark:hover:bg-zinc-800",
           !canPrev && "pointer-events-none opacity-40",
-          canPrev && "hover:bg-white",
+          canPrev && "hover:bg-white dark:hover:bg-zinc-800",
         )}
       >
         <ChevronLeft className="size-5" aria-hidden />
@@ -111,9 +113,9 @@ export function ListingGallery({ imageUrls }: ListingGalleryProps) {
         disabled={!canNext}
         onClick={() => goTo(activeIndex + 1)}
         className={cn(
-          "absolute top-1/2 right-2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/85 text-zinc-800 shadow-sm backdrop-blur-sm transition-opacity",
+          "absolute top-1/2 right-2 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/85 text-zinc-800 shadow-sm backdrop-blur-sm transition-opacity dark:border-zinc-600 dark:bg-zinc-900/90 dark:text-zinc-100 dark:hover:bg-zinc-800",
           !canNext && "pointer-events-none opacity-40",
-          canNext && "hover:bg-white",
+          canNext && "hover:bg-white dark:hover:bg-zinc-800",
         )}
       >
         <ChevronRight className="size-5" aria-hidden />
@@ -133,10 +135,10 @@ export function ListingGallery({ imageUrls }: ListingGalleryProps) {
             aria-label={`Foto ${i + 1} de ${imgs.length}`}
             onClick={() => goTo(i)}
             className={cn(
-              "size-2.5 rounded-full transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none",
+              "size-2.5 rounded-full transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:outline-none dark:focus-visible:ring-offset-zinc-900",
               i === activeIndex
-                ? "scale-110 bg-white shadow-sm ring-1 ring-zinc-500/50"
-                : "bg-white/55 hover:bg-white/85",
+                ? "scale-110 bg-white shadow-sm ring-1 ring-zinc-500/50 dark:bg-emerald-400 dark:ring-emerald-300/60"
+                : "bg-white/55 hover:bg-white/85 dark:bg-zinc-600 dark:hover:bg-zinc-500",
             )}
           />
         ))}

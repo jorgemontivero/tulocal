@@ -36,6 +36,12 @@ type DashboardPageProps = {
   searchParams: Promise<{ success?: string }>;
 };
 
+async function signOutAndRedirect() {
+  "use server";
+  await signOut();
+  redirect("/login");
+}
+
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const supabase = await createClient();
   const params = await searchParams;
@@ -71,9 +77,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     : { data: [] };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10 dark:bg-zinc-950">
       <div className="w-full max-w-xl space-y-4">
-        <Card className="border border-zinc-200 bg-white shadow-sm">
+        <Card className="border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
           <CardHeader className="space-y-2">
             <Link
               href="/"
@@ -87,41 +93,51 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 className="h-10 w-auto object-contain"
               />
               <span
-                className={`${brandSans.className} text-2xl font-extrabold italic tracking-tight text-slate-900`}
+                className={`${brandSans.className} text-2xl font-extrabold italic tracking-tight text-slate-900 dark:text-zinc-100`}
               >
                 Tu Local
               </span>
             </Link>
-            <CardTitle className="text-2xl text-slate-900">
+            <CardTitle className="text-2xl text-slate-900 dark:text-zinc-100">
               Bienvenido, {saludoNombreUsuario(user)}
             </CardTitle>
-            <CardDescription className="text-slate-700">
+            <CardDescription className="text-slate-700 dark:text-zinc-300">
               Gestiona tu presencia en tulocal.com.ar.
             </CardDescription>
           </CardHeader>
         </Card>
 
+        <form action={signOutAndRedirect} className="flex justify-end">
+          <Button
+            type="submit"
+            variant="outline"
+            className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+          >
+            Cerrar sesión
+          </Button>
+        </form>
+
         {params.success === "local-creado" && (
-          <Card className="border border-emerald-200 bg-emerald-50">
-            <CardContent className="pt-4 text-sm text-emerald-700">
+          <Card className="border border-emerald-200 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/25">
+            <CardContent className="pt-4 text-sm text-emerald-700 dark:text-emerald-200">
               Local guardado con exito.
             </CardContent>
           </Card>
         )}
 
         {params.success === "listing-actualizado" && (
-          <Card className="border border-emerald-200 bg-emerald-50">
-            <CardContent className="pt-4 text-sm text-emerald-700">
+          <Card className="border border-emerald-200 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/25">
+            <CardContent className="pt-4 text-sm text-emerald-700 dark:text-emerald-200">
               Producto actualizado correctamente.
             </CardContent>
           </Card>
         )}
 
         {!shop ? (
-          <Card className="border border-zinc-200 bg-white shadow-sm">
+          <Card className="border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             <CardHeader>
-              <CardTitle className="text-slate-900">Todavia no registraste tu local</CardTitle>
-              <CardDescription className="text-slate-700">
+              <CardTitle className="text-slate-900 dark:text-zinc-100">Todavia no registraste tu local</CardTitle>
+              <CardDescription className="text-slate-700 dark:text-zinc-300">
                 Completando unos pocos datos ya podras aparecer en el directorio.
               </CardDescription>
             </CardHeader>
@@ -138,27 +154,27 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </Card>
         ) : (
           <div className="space-y-4">
-            <Card className="border border-zinc-200 bg-white shadow-sm">
+            <Card className="border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-slate-900">
+                <CardTitle className="text-xl font-bold text-slate-900 dark:text-zinc-100">
                   Resumen de tu local
                 </CardTitle>
-                <CardDescription className="text-slate-700">Datos visibles para potenciales clientes.</CardDescription>
+                <CardDescription className="text-slate-700 dark:text-zinc-300">Datos visibles para potenciales clientes.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="pb-2">
                   <Avatar size="lg" className="size-16">
                     {logoUrl && <AvatarImage src={logoUrl} alt={`Logo de ${shop.name}`} />}
-                    <AvatarFallback className="bg-slate-100 font-semibold text-slate-700">
+                    <AvatarFallback className="bg-slate-100 font-semibold text-slate-700 dark:bg-zinc-800 dark:text-zinc-200">
                       {initial}
                     </AvatarFallback>
                   </Avatar>
                 </div>
-                <p className="text-sm text-slate-700">Nombre</p>
-                <p className="font-semibold text-slate-900">{shop.name}</p>
+                <p className="text-sm text-slate-700 dark:text-zinc-300">Nombre</p>
+                <p className="font-semibold text-slate-900 dark:text-zinc-100">{shop.name}</p>
 
-                <p className="text-sm text-slate-700">WhatsApp</p>
-                <p className="font-semibold text-slate-900">{whatsapp ?? "No configurado"}</p>
+                <p className="text-sm text-slate-700 dark:text-zinc-300">WhatsApp</p>
+                <p className="font-semibold text-slate-900 dark:text-zinc-100">{whatsapp ?? "No configurado"}</p>
 
                 <div className="flex flex-wrap gap-2 pt-1">
                   <Button
@@ -166,7 +182,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                       <Link href="/dashboard/nuevo" />
                     }
                     variant="outline"
-                    className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+                    className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
                   >
                     Editar Datos
                   </Button>
@@ -186,20 +202,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         )}
 
-        <form
-          action={async () => {
-            "use server";
-            await signOut();
-            redirect("/login");
-          }}
-          className="pt-2"
-        >
+        <form action={signOutAndRedirect} className="pt-2">
           <Button
             type="submit"
             variant="outline"
-            className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+            className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
           >
-            Cerrar Sesion
+            Cerrar sesión
           </Button>
         </form>
       </div>

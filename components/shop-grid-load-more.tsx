@@ -56,7 +56,7 @@ export function ShopGridLoadMore({
             onClick={handleLoadMore}
             disabled={isPending}
             variant="outline"
-            className="min-w-[200px] border-emerald-200 text-emerald-800 hover:border-emerald-300 hover:bg-emerald-50"
+            className="min-w-[200px] border-emerald-200 text-emerald-800 hover:border-emerald-300 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-200 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/40"
           >
             {isPending ? (
               <>
@@ -69,7 +69,7 @@ export function ShopGridLoadMore({
           </Button>
         </div>
       ) : shops.length > PAGE_SIZE ? (
-        <p className="mt-8 text-center text-sm text-zinc-400">
+        <p className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">
           Has llegado al final de los locales en esta categoría
         </p>
       ) : null}

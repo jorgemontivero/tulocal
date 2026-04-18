@@ -22,7 +22,7 @@ function PromoFooterModal() {
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
-      <Dialog.Trigger className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium text-emerald-200 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+      <Dialog.Trigger className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50">
         <Gift className="size-3.5" />
         Sorteos y Cupones
       </Dialog.Trigger>
@@ -85,6 +85,9 @@ export function SiteFooter() {
               Contacto
             </Link>
           </nav>
+          <div className="flex justify-center sm:flex-1">
+            <PromoFooterModal />
+          </div>
           <p className="text-white/90">Potenciando el comercio local</p>
         </div>
 
@@ -93,8 +96,6 @@ export function SiteFooter() {
           <span aria-hidden>·</span>
           <Link href="/terminos">Términos y condiciones</Link>
           <Link href="/privacidad">Política de privacidad</Link>
-          <span aria-hidden>·</span>
-          <PromoFooterModal />
         </div>
       </div>
     </footer>

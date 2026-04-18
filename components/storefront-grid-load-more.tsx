@@ -43,8 +43,8 @@ function ListingCard({ item }: { item: StorefrontListing }) {
       className={cn(
         "relative overflow-hidden",
         item.is_promoted
-          ? "border-2 border-emerald-600 bg-emerald-50"
-          : "border border-zinc-200 bg-white",
+          ? "border-2 border-emerald-600 bg-emerald-50 shadow-md shadow-emerald-900/10 dark:border-emerald-500 dark:bg-emerald-950/45 dark:shadow-lg dark:shadow-emerald-950/40"
+          : "border border-zinc-200 bg-white dark:border-zinc-600 dark:bg-zinc-900 dark:shadow-md dark:shadow-black/20",
       )}
     >
       {item.is_promoted && (
@@ -61,25 +61,25 @@ function ListingCard({ item }: { item: StorefrontListing }) {
       <ListingGallery imageUrls={item.image_urls} />
 
       <CardHeader>
-        <CardTitle className="line-clamp-2">{item.title}</CardTitle>
-        <CardDescription className="line-clamp-3">
+        <CardTitle className="line-clamp-2 text-zinc-900 dark:text-zinc-100">{item.title}</CardTitle>
+        <CardDescription className="line-clamp-3 text-zinc-600 dark:text-zinc-400">
           {item.description ?? "Sin descripcion"}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {showConsultar ? (
-          <p className="font-bold text-emerald-800">Consultar precio</p>
+          <p className="font-bold text-emerald-800 dark:text-emerald-300">Consultar precio</p>
         ) : showOffer && priceVal != null ? (
           <div className="space-y-1">
-            <p className="text-sm text-zinc-500 line-through">
+            <p className="text-sm text-zinc-500 line-through dark:text-zinc-400">
               {formatARS(listingOriginalBeforeDiscount(priceVal, disc ?? 0))}
             </p>
-            <p className="font-semibold text-emerald-700">{formatARS(priceVal)}</p>
+            <p className="font-semibold text-emerald-700 dark:text-emerald-400">{formatARS(priceVal)}</p>
           </div>
         ) : priceVal != null ? (
-          <p className="font-semibold text-emerald-700">{formatARS(priceVal)}</p>
+          <p className="font-semibold text-emerald-700 dark:text-emerald-400">{formatARS(priceVal)}</p>
         ) : (
-          <p className="font-bold text-emerald-800">Consultar precio</p>
+          <p className="font-bold text-emerald-800 dark:text-emerald-300">Consultar precio</p>
         )}
       </CardContent>
     </Card>
@@ -137,7 +137,7 @@ export function StorefrontGridLoadMore({
             onClick={handleLoadMore}
             disabled={isPending}
             variant="outline"
-            className="min-w-[200px] border-emerald-200 text-emerald-800 hover:border-emerald-300 hover:bg-emerald-50"
+            className="min-w-[200px] border-emerald-200 text-emerald-800 hover:border-emerald-300 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-200 dark:hover:border-emerald-600 dark:hover:bg-emerald-950/40"
           >
             {isPending ? (
               <>
@@ -150,7 +150,7 @@ export function StorefrontGridLoadMore({
           </Button>
         </div>
       ) : listings.length > LISTINGS_PAGE_SIZE ? (
-        <p className="mt-8 text-center text-sm text-zinc-400">
+        <p className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">
           Has llegado al final del catálogo
         </p>
       ) : null}

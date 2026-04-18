@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -6,6 +7,9 @@ import { CookieBanner } from "@/components/cookie-banner";
 import { SiteHeaderWrapper } from "@/components/site-header-wrapper";
 import { PromoPopup } from "@/components/promo-popup";
 import { ThemeProvider } from "@/components/theme-provider";
+import { THEME_KEY } from "@/lib/theme-constants";
+import { themeFromCookieValue } from "@/lib/theme-cookie";
+import { cn } from "@/lib/utils";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -80,25 +84,27 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const initialTheme = themeFromCookieValue(cookieStore.get(THEME_KEY)?.value);
+
   return (
     <html
       lang="es-AR"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={cn(
+        geistSans.variable,
+        geistMono.variable,
+        "h-full antialiased",
+        initialTheme === "dark" && "dark",
+      )}
     >
       <body className="flex min-h-full flex-col bg-background">
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "try{var t=localStorage.getItem('theme');if(t==='dark'){document.documentElement.classList.add('dark')}else{document.documentElement.classList.remove('dark')}}catch(e){}",
-          }}
-        />
-        <ThemeProvider>
+        <ThemeProvider initialTheme={initialTheme}>
           <SiteHeaderWrapper />
           {children}
           <Analytics />

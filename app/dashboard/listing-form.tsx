@@ -171,7 +171,7 @@ export function ListingForm({ mode, listing, fileInputId = "listing-form-images"
   return (
     <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
       <div className="space-y-1.5 sm:col-span-2">
-        <label className="text-sm font-semibold text-slate-900">Producto/Servicio</label>
+        <label className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Producto/Servicio</label>
         <Input
           placeholder="Ej: poncho, dulces regionales, pantalón, etc..."
           {...form.register("title")}
@@ -182,7 +182,7 @@ export function ListingForm({ mode, listing, fileInputId = "listing-form-images"
       </div>
 
       <div className="space-y-1.5 sm:col-span-2">
-        <label className="text-sm font-semibold text-slate-900">Descripcion</label>
+        <label className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Descripcion</label>
         <Textarea
           rows={3}
           placeholder="Describe brevemente que incluye este item."
@@ -194,14 +194,14 @@ export function ListingForm({ mode, listing, fileInputId = "listing-form-images"
       </div>
 
       <div className="space-y-1.5 sm:col-span-2">
-        <label className="text-sm font-semibold text-slate-900">Precio (ARS) - Opcional</label>
+        <label className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Precio (ARS) - Opcional</label>
         <Input
           type="text"
           inputMode="decimal"
           placeholder="Dejalo vacio para mostrar Consultar precio"
           {...form.register("price")}
         />
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Dejá este campo vacío o en 0 si preferís que el cliente vea &quot;Consultar precio&quot;.
         </p>
         {form.formState.errors.price && (
@@ -215,12 +215,12 @@ export function ListingForm({ mode, listing, fileInputId = "listing-form-images"
           className="size-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-600"
           {...form.register("is_offer")}
         />
-        <span className="text-sm font-semibold text-slate-900">Es una Oferta</span>
+        <span className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Es una Oferta</span>
       </label>
 
       {isOffer && (
         <div className="space-y-1.5 sm:col-span-2">
-          <label className="text-sm font-semibold text-slate-900">
+          <label className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
             Porcentaje de Descuento (%)
           </label>
           <Input
@@ -245,23 +245,23 @@ export function ListingForm({ mode, listing, fileInputId = "listing-form-images"
           className="size-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-600"
           {...form.register("is_promoted")}
         />
-        <span className="text-sm font-semibold text-slate-900">
+        <span className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
           Promocionar este producto (Destacado)
         </span>
       </label>
 
       <div className="space-y-2 sm:col-span-2">
-        <p className="text-sm font-semibold text-slate-900">
+        <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
           Imagenes (hasta {MAX_LISTING_IMAGES})
         </p>
         {mode === "edit" && existingUrls.length > 0 ? (
-          <div className="flex flex-wrap gap-2 rounded-md border border-zinc-200 bg-zinc-50 p-2">
+          <div className="flex flex-wrap gap-2 rounded-md border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-700 dark:bg-zinc-800">
             {existingUrls.map((src) => (
               <img
                 key={src}
                 src={src}
                 alt=""
-                className="h-16 w-16 rounded object-cover ring-1 ring-zinc-200"
+                className="h-16 w-16 rounded object-cover ring-1 ring-zinc-200 dark:ring-zinc-700"
               />
             ))}
           </div>
@@ -277,23 +277,23 @@ export function ListingForm({ mode, listing, fileInputId = "listing-form-images"
           />
           <label
             htmlFor={fileInputId}
-            className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-8 text-center transition-colors hover:border-emerald-400 hover:bg-emerald-50/60"
+            className="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-8 text-center transition-colors hover:border-emerald-400 hover:bg-emerald-50/60 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-emerald-500 dark:hover:bg-emerald-900/20"
           >
-            <span className="text-sm font-medium text-emerald-800">
+            <span className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
               {mode === "edit" ? "Seleccionar nuevas imagenes" : "Seleccionar imagenes"}
             </span>
-            <span className="mt-1 text-xs text-zinc-500">
+            <span className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               Hasta {MAX_LISTING_IMAGES} archivos · JPG, PNG o WebP
             </span>
             {mode === "edit" ? (
-              <span className="mt-2 text-xs font-medium text-amber-800">
+              <span className="mt-2 text-xs font-medium text-amber-800 dark:text-amber-300">
                 Subir nuevas imagenes reemplazará las actuales.
               </span>
             ) : null}
           </label>
         </div>
         {imageFiles.length > 0 ? (
-          <ul className="space-y-1 rounded-md border border-zinc-200 bg-white p-3 text-xs text-slate-700">
+          <ul className="space-y-1 rounded-md border border-zinc-200 bg-white p-3 text-xs text-slate-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
             {imageFiles.map((file) => (
               <li key={`${file.name}-${file.size}`} className="truncate" title={file.name}>
                 {file.name}

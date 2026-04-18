@@ -5,12 +5,15 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { THEME_KEY } from "@/lib/theme-constants";
+import { themeCookiePair, type ThemeValue } from "@/lib/theme-cookie";
 
-type Theme = "light" | "dark";
+type Theme = ThemeValue;
 
 type ThemeContextValue = {
   theme: Theme;
@@ -18,7 +21,6 @@ type ThemeContextValue = {
   toggleTheme: () => void;
 };
 
-const THEME_STORAGE_KEY = "theme";
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function applyThemeToDocument(theme: Theme) {
@@ -30,16 +32,37 @@ function applyThemeToDocument(theme: Theme) {
   root.classList.toggle("dark", theme === "dark");
 }
 
-function getInitialTheme(): Theme {
+function setThemeCookieClient(theme: Theme) {
   if (typeof document === "undefined") {
-    return "light";
+    return;
   }
-
-  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+  document.cookie = themeCookiePair(theme);
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+type ThemeProviderProps = {
+  children: ReactNode;
+  /** Tema desde la cookie en el servidor; debe coincidir con la clase `dark` en `<html>`. */
+  initialTheme: Theme;
+};
+
+export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
+  const [theme, setThemeState] = useState<Theme>(initialTheme);
+
+  useLayoutEffect(() => {
+    try {
+      const stored = localStorage.getItem(THEME_KEY);
+      if (
+        (stored === "dark" || stored === "light") &&
+        stored !== initialTheme
+      ) {
+        queueMicrotask(() => {
+          setThemeState(stored);
+        });
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [initialTheme]);
 
   const setTheme = useCallback((nextTheme: Theme) => {
     setThemeState(nextTheme);
@@ -51,7 +74,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     applyThemeToDocument(theme);
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+      setThemeCookieClient(theme);
+    } catch {
+      /* ignore */
+    }
   }, [theme]);
 
   const value = useMemo(

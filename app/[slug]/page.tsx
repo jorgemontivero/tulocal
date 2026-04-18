@@ -1,4 +1,4 @@
-import type { Metadata, ResolvingMetadata } from "next";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MapPin, MessageCircle, Navigation } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -122,7 +122,6 @@ function buildLocalBusinessJsonLd(shop: {
 
 export async function generateMetadata(
   { params }: ShopPageProps,
-  _parent: ResolvingMetadata,
 ): Promise<Metadata> {
   const { slug } = await params;
   const supabase = await createClient();
@@ -252,22 +251,22 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-    <main className="min-h-screen bg-slate-50 px-4 py-8">
+    <main className="min-h-screen bg-slate-50 px-4 py-8 dark:bg-zinc-950">
       <div className="mx-auto w-full max-w-6xl space-y-6">
-        <Card className="border border-zinc-200 bg-white shadow-sm">
+        <Card className="border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
           <CardHeader className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
             <div className="flex min-w-0 flex-1 flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
-              <Avatar className="size-24 shrink-0 ring-2 ring-zinc-200/90 ring-offset-2 ring-offset-white md:size-32">
+              <Avatar className="size-24 shrink-0 ring-2 ring-zinc-200/90 ring-offset-2 ring-offset-white dark:ring-zinc-700 dark:ring-offset-zinc-900 md:size-32">
                 {shop.logo_url && (
                   <AvatarImage src={shop.logo_url} alt={`Logo de ${shop.name}`} className="object-cover" />
                 )}
-                <AvatarFallback className="bg-slate-100 text-3xl font-semibold text-slate-700 md:text-4xl">
+                <AvatarFallback className="bg-slate-100 text-3xl font-semibold text-slate-700 dark:bg-zinc-800 dark:text-zinc-200 md:text-4xl">
                   {shop.name.slice(0, 1).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 text-center sm:text-left">
-                <CardTitle className="text-2xl text-slate-900 sm:text-3xl">{shop.name}</CardTitle>
-                <CardDescription className="mt-1 text-base text-slate-700">
+                <CardTitle className="text-2xl text-slate-900 dark:text-zinc-100 sm:text-3xl">{shop.name}</CardTitle>
+                <CardDescription className="mt-1 text-base text-slate-700 dark:text-zinc-300">
                   {shop.category ?? "Comercio local"} {shop.description ? `· ${shop.description}` : ""}
                 </CardDescription>
               </div>
@@ -296,7 +295,7 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
                       <a href={instagramUrl} target="_blank" rel="noopener noreferrer" />
                     }
                     variant="outline"
-                    className="border-fuchsia-500 text-fuchsia-700 hover:bg-fuchsia-50"
+                    className="border-fuchsia-500 text-fuchsia-700 hover:bg-fuchsia-50 dark:border-fuchsia-500/80 dark:text-fuchsia-300 dark:hover:bg-fuchsia-950/30"
                   >
                     <InstagramIcon className="size-4" />
                     Instagram
@@ -308,7 +307,7 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
         </Card>
 
         {flyerUrls.length > 0 && (
-          <Card className="overflow-hidden border border-zinc-200 bg-white shadow-sm">
+          <Card className="overflow-hidden border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Promociones del local</CardTitle>
               <CardDescription>
@@ -322,21 +321,21 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
         )}
 
         {(shop.address || hasCoordinates) && (
-          <Card className="overflow-hidden border border-zinc-200 bg-white shadow-sm">
+          <Card className="overflow-hidden border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <MapPin className="size-5 shrink-0 text-emerald-700" />
                 <CardTitle className="text-lg">Ubicación</CardTitle>
               </div>
               {shop.address && (
-                <CardDescription className="text-base text-slate-700">
+                <CardDescription className="text-base text-slate-700 dark:text-zinc-300">
                   {shop.address}
                 </CardDescription>
               )}
             </CardHeader>
             <CardContent className="space-y-4 pb-5">
               {embedMapUrl && (
-                <div className="overflow-hidden rounded-xl border border-zinc-200">
+                <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
                   <iframe
                     src={embedMapUrl}
                     title={`Mapa de ${shop.name}`}
@@ -373,7 +372,7 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
             initialHasMore={hasMoreListings}
           />
         ) : (
-          <Card className="border border-zinc-200 bg-white">
+          <Card className="border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
             <CardHeader>
               <CardTitle>Catalogo en preparacion</CardTitle>
               <CardDescription>

@@ -56,10 +56,10 @@ export function CatalogManager({ listings }: { listings: ListingItem[] }) {
   };
 
   return (
-    <Card className="border border-zinc-200 bg-white shadow-sm">
+    <Card className="border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
       <CardHeader>
-        <CardTitle className="text-xl font-bold text-slate-900">Mi Catalogo</CardTitle>
-        <CardDescription className="text-slate-700">
+        <CardTitle className="text-xl font-bold text-slate-900 dark:text-zinc-100">Mi Catalogo</CardTitle>
+        <CardDescription className="text-slate-700 dark:text-zinc-300">
           Agrega productos o servicios para mostrar en tu pagina publica.
         </CardDescription>
       </CardHeader>
@@ -70,7 +70,7 @@ export function CatalogManager({ listings }: { listings: ListingItem[] }) {
 
         <div className="space-y-3">
           {listings.length === 0 ? (
-            <p className="text-sm text-slate-700">Todavia no agregaste items al catalogo.</p>
+            <p className="text-sm text-slate-700 dark:text-zinc-300">Todavia no agregaste items al catalogo.</p>
           ) : (
             listings.map((item) => {
               const imgs = parseListingImageUrls(item.image_urls);
@@ -92,8 +92,8 @@ export function CatalogManager({ listings }: { listings: ListingItem[] }) {
                   className={cn(
                     "relative overflow-hidden",
                     item.is_promoted
-                      ? "border-2 border-emerald-600 bg-emerald-50"
-                      : "border border-zinc-200",
+                      ? "border-2 border-emerald-600 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-900/20"
+                      : "border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900",
                   )}
                 >
                   {item.is_promoted && (
@@ -116,13 +116,13 @@ export function CatalogManager({ listings }: { listings: ListingItem[] }) {
                   ) : null}
 
                   {imgs.length > 1 ? (
-                    <div className="flex gap-1 overflow-x-auto border-t border-zinc-200 bg-zinc-50 p-2">
+                    <div className="flex gap-1 overflow-x-auto border-t border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-700 dark:bg-zinc-800">
                       {imgs.slice(1).map((src) => (
                         <img
                           key={src}
                           src={src}
                           alt=""
-                          className="h-12 w-12 shrink-0 rounded object-cover ring-1 ring-zinc-200"
+                          className="h-12 w-12 shrink-0 rounded object-cover ring-1 ring-zinc-200 dark:ring-zinc-700"
                         />
                       ))}
                     </div>
@@ -130,8 +130,8 @@ export function CatalogManager({ listings }: { listings: ListingItem[] }) {
 
                   <CardContent className="flex items-start justify-between gap-3 pt-4">
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-slate-900">{item.title}</p>
-                      <p className="mt-1 text-sm text-slate-700">
+                      <p className="font-semibold text-slate-900 dark:text-zinc-100">{item.title}</p>
+                      <p className="mt-1 text-sm text-slate-700 dark:text-zinc-300">
                         {item.description ?? "Sin descripcion"}
                       </p>
                       <div className="mt-2 space-y-1">
@@ -139,7 +139,7 @@ export function CatalogManager({ listings }: { listings: ListingItem[] }) {
                           <p className="font-bold text-emerald-800">Consultar precio</p>
                         ) : showOffer && priceVal != null ? (
                           <>
-                            <p className="text-sm text-zinc-500 line-through">
+                            <p className="text-sm text-zinc-500 line-through dark:text-zinc-400">
                               {formatARS(
                                 listingOriginalBeforeDiscount(priceVal, disc ?? 0),
                               )}
@@ -159,7 +159,7 @@ export function CatalogManager({ listings }: { listings: ListingItem[] }) {
                       <Button
                         type="button"
                         variant="outline"
-                        className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                        className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/60 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
                         render={<Link href={`/dashboard/catalogo/${item.id}/editar`} />}
                         title="Editar"
                       >
@@ -168,7 +168,7 @@ export function CatalogManager({ listings }: { listings: ListingItem[] }) {
                       <Button
                         type="button"
                         variant="outline"
-                        className="border-red-200 text-red-600 hover:bg-red-50"
+                        className="border-red-200 text-red-600 hover:bg-red-50 dark:border-red-500/50 dark:text-red-300 dark:hover:bg-red-950/30"
                         onClick={() => handleDelete(item.id)}
                         disabled={isPending}
                         title="Eliminar"

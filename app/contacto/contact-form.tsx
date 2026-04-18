@@ -40,10 +40,10 @@ export function ContactForm() {
     return (
       <div
         role="status"
-        className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center"
+        className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center dark:border-emerald-700 dark:bg-emerald-900/25"
       >
-        <p className="text-lg font-semibold text-emerald-900">Mensaje enviado</p>
-        <p className="mt-2 text-sm text-emerald-800">
+        <p className="text-lg font-semibold text-emerald-900 dark:text-emerald-100">Mensaje enviado</p>
+        <p className="mt-2 text-sm text-emerald-800 dark:text-emerald-200">
           Gracias por escribirnos. Te responderemos a la brevedad al correo que indicaste.
         </p>
       </div>
@@ -53,7 +53,7 @@ export function ContactForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-1.5">
-        <label htmlFor="contact-name" className="text-sm font-semibold text-slate-900">
+        <label htmlFor="contact-name" className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
           Nombre
         </label>
         <Input
@@ -69,7 +69,7 @@ export function ContactForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="contact-email" className="text-sm font-semibold text-slate-900">
+        <label htmlFor="contact-email" className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
           Email
         </label>
         <Input
@@ -86,8 +86,8 @@ export function ContactForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="contact-phone" className="text-sm font-semibold text-slate-900">
-          Teléfono <span className="font-normal text-zinc-500">(opcional)</span>
+        <label htmlFor="contact-phone" className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
+          Teléfono <span className="font-normal text-zinc-500 dark:text-zinc-400">(opcional)</span>
         </label>
         <Input
           id="contact-phone"
@@ -104,7 +104,7 @@ export function ContactForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="contact-subject" className="text-sm font-semibold text-slate-900">
+        <label htmlFor="contact-subject" className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
           Asunto
         </label>
         <Input
@@ -119,7 +119,7 @@ export function ContactForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="contact-message" className="text-sm font-semibold text-slate-900">
+        <label htmlFor="contact-message" className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
           Mensaje
         </label>
         <Textarea
@@ -137,7 +137,7 @@ export function ContactForm() {
       {status === "error" && errorMessage ? (
         <div
           role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-200"
         >
           {errorMessage}
         </div>

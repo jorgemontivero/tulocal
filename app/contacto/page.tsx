@@ -36,9 +36,9 @@ function WhatsAppIcon({ className }: { className?: string }) {
 
 export default function ContactoPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-zinc-900">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <main className="flex-1 px-4 pb-16 pt-6">
-      <div className="mx-auto mt-10 max-w-4xl rounded-2xl bg-white p-6 shadow-sm md:p-8">
+      <div className="mx-auto mt-10 max-w-4xl rounded-2xl bg-white p-6 shadow-sm dark:bg-zinc-900 md:p-8">
         <Link
           href="/"
           className="mb-8 flex items-center gap-3 rounded-lg outline-offset-4 hover:opacity-90"
@@ -51,14 +51,14 @@ export default function ContactoPage() {
             className="h-10 w-auto object-contain"
           />
           <span
-            className={`${brandSans.className} text-2xl font-extrabold italic tracking-tight text-slate-900`}
+            className={`${brandSans.className} text-2xl font-extrabold italic tracking-tight text-slate-900 dark:text-zinc-100`}
           >
             Tu Local
           </span>
         </Link>
 
-        <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">Contacto</h1>
-        <p className="mt-2 text-slate-700">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-zinc-100 md:text-3xl">Contacto</h1>
+        <p className="mt-2 text-slate-700 dark:text-zinc-300">
           ¿Tenés dudas sobre el directorio o querés sumar tu comercio? Estamos para ayudarte.
         </p>
 
@@ -66,11 +66,11 @@ export default function ContactoPage() {
           <section className="space-y-4" aria-labelledby="contacto-info-heading">
             <h2
               id="contacto-info-heading"
-              className="text-lg font-bold text-slate-900"
+              className="text-lg font-bold text-slate-900 dark:text-zinc-100"
             >
               Información de contacto
             </h2>
-            <p className="text-sm leading-relaxed text-slate-700">
+            <p className="text-sm leading-relaxed text-slate-700 dark:text-zinc-300">
               Podés escribirnos por correo con el formulario o, si preferís una respuesta mas
               rápida, chateanos por WhatsApp. Respondemos en horario hábil lo antes posible.
             </p>
@@ -79,14 +79,14 @@ export default function ContactoPage() {
               href={WHATSAPP_HREF}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center gap-4 rounded-xl border-2 border-emerald-500/40 bg-emerald-50/80 p-4 text-emerald-900 transition-colors hover:border-emerald-600 hover:bg-emerald-600 hover:text-white"
+              className="group flex items-center gap-4 rounded-xl border-2 border-emerald-500/40 bg-emerald-50/80 p-4 text-emerald-900 transition-colors hover:border-emerald-600 hover:bg-emerald-600 hover:text-white dark:border-emerald-700 dark:bg-emerald-900/25 dark:text-emerald-100 dark:hover:bg-emerald-700"
             >
               <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white transition-colors group-hover:bg-white group-hover:text-emerald-600">
                 <WhatsAppIcon className="size-7" />
               </span>
               <span className="min-w-0 text-left">
                 <span className="block text-sm font-semibold">WhatsApp</span>
-                <span className="mt-0.5 block text-xs text-emerald-800/90 group-hover:text-white/95">
+                <span className="mt-0.5 block text-xs text-emerald-800/90 group-hover:text-white/95 dark:text-emerald-200">
                   +54 9 383 499-7929 — Tocá para abrir el chat
                 </span>
               </span>
@@ -96,7 +96,7 @@ export default function ContactoPage() {
           <section aria-labelledby="contacto-form-heading">
             <h2
               id="contacto-form-heading"
-              className="mb-4 text-lg font-bold text-slate-900"
+              className="mb-4 text-lg font-bold text-slate-900 dark:text-zinc-100"
             >
               Formulario
             </h2>

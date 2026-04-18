@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 export type ShopCardShop = {
   id: string;
   name: string;
@@ -54,13 +55,15 @@ function planBadge(planType: string | null | undefined): {
   if (planType === "plata") {
     return {
       label: "Plan Plata",
-      className: "bg-slate-100 text-slate-800 border border-slate-300",
+      className:
+        "border border-slate-300 bg-slate-100 text-slate-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100",
     };
   }
   if (planType === "oro" || planType === "black") {
     return {
       label: "Plan Oro",
-      className: "bg-amber-100 text-amber-900 border border-amber-300",
+      className:
+        "border border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-500/70 dark:bg-amber-950/80 dark:text-amber-100",
     };
   }
   return null;
@@ -73,21 +76,22 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
   if (variant === "directory") {
     return (
       <Card
-        className={`h-full overflow-hidden border bg-white shadow-sm transition-shadow hover:shadow-md ${
+        className={cn(
+          "h-full overflow-hidden border shadow-sm transition-shadow hover:shadow-md",
           premium
-            ? "border-amber-300 bg-gradient-to-b from-amber-50 to-white ring-1 ring-amber-200/70"
-            : "border-zinc-200"
-        }`}
+            ? "border-amber-300 bg-gradient-to-b from-amber-50 to-white ring-1 ring-amber-200/70 dark:border-amber-500/55 dark:bg-gradient-to-b dark:from-amber-950/90 dark:to-zinc-900 dark:ring-amber-400/30 dark:shadow-[0_12px_40px_-12px_rgba(251,191,36,0.18)]"
+            : "border-zinc-200 bg-white dark:border-zinc-600 dark:bg-zinc-900 dark:shadow-lg dark:shadow-black/25",
+        )}
       >
         <Link
           href={`/${shop.slug}`}
-          className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2"
+          className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
         >
           <div
             className={`relative flex h-36 w-full items-center justify-center px-4 pt-5 pb-2 ${
               premium
-                ? "bg-gradient-to-b from-amber-100/70 to-amber-50/40"
-                : "bg-gradient-to-b from-slate-50 to-white"
+                ? "bg-gradient-to-b from-amber-100/70 to-amber-50/40 dark:from-amber-900/50 dark:to-zinc-900/90"
+                : "bg-gradient-to-b from-slate-50 to-white dark:from-zinc-800 dark:to-zinc-900"
             }`}
           >
             {shop.logo_url ? (
@@ -99,7 +103,7 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
               />
             ) : (
               <span
-                className="flex size-24 items-center justify-center rounded-2xl bg-slate-200/90 text-3xl font-bold text-slate-600"
+                className="flex size-24 items-center justify-center rounded-2xl bg-slate-200/90 text-3xl font-bold text-slate-600 dark:bg-zinc-700 dark:text-zinc-200"
                 aria-hidden
               >
                 {shop.name.slice(0, 1).toUpperCase()}
@@ -107,10 +111,10 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
             )}
           </div>
           <CardHeader className="space-y-1 pb-2 pt-3">
-            <CardTitle className="line-clamp-2 text-center text-lg leading-snug text-zinc-900">
+            <CardTitle className="line-clamp-2 text-center text-lg leading-snug text-zinc-900 dark:text-zinc-100">
               {shop.name}
             </CardTitle>
-            <CardDescription className="line-clamp-2 min-h-[2.5rem] text-center text-sm">
+            <CardDescription className="line-clamp-2 min-h-[2.5rem] text-center text-sm text-zinc-600 dark:text-zinc-400">
               {shortDescription(shop.description)}
             </CardDescription>
             {premiumBadge && (
@@ -141,7 +145,7 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
                   />
                 }
                 variant="outline"
-                className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+                className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
               >
                 <MessageCircle />
               </Button>
@@ -154,11 +158,12 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
 
   return (
     <Card
-      className={`h-full border bg-white shadow-sm transition-shadow hover:shadow-md ${
+      className={cn(
+        "h-full border shadow-sm transition-shadow hover:shadow-md",
         premium
-          ? "border-amber-300 bg-gradient-to-b from-amber-50 to-white ring-1 ring-amber-200/70"
-          : "border-zinc-200"
-      }`}
+          ? "border-amber-300 bg-gradient-to-b from-amber-50 to-white ring-1 ring-amber-200/70 dark:border-amber-500/55 dark:bg-gradient-to-b dark:from-amber-950/90 dark:to-zinc-900 dark:ring-amber-400/30 dark:shadow-[0_12px_40px_-12px_rgba(251,191,36,0.18)]"
+          : "border-zinc-200 bg-white dark:border-zinc-600 dark:bg-zinc-900 dark:shadow-lg dark:shadow-black/25",
+      )}
     >
       <CardHeader>
         <div className="mb-2 flex items-center gap-3">
@@ -166,13 +171,13 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
             {shop.logo_url && (
               <AvatarImage src={shop.logo_url} alt={`Logo de ${shop.name}`} />
             )}
-            <AvatarFallback className="bg-slate-100 font-semibold text-slate-700">
+            <AvatarFallback className="bg-slate-100 font-semibold text-slate-700 dark:bg-zinc-700 dark:text-zinc-200">
               {shop.name.slice(0, 1).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <CardTitle className="line-clamp-1">{shop.name}</CardTitle>
+          <CardTitle className="line-clamp-1 text-zinc-900 dark:text-zinc-100">{shop.name}</CardTitle>
         </div>
-        <CardDescription className="line-clamp-2 min-h-[2.5rem]">
+        <CardDescription className="line-clamp-2 min-h-[2.5rem] text-zinc-600 dark:text-zinc-400">
           {shortDescription(shop.description)}
         </CardDescription>
         {premiumBadge && (
@@ -200,7 +205,7 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
                 />
               }
               variant="outline"
-              className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+              className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
             >
               <MessageCircle />
             </Button>

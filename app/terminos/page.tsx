@@ -11,18 +11,18 @@ export const metadata: Metadata = {
 
 export default function TerminosPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-zinc-900">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <main className="flex-1 px-4 py-10 sm:px-6 sm:py-16">
-        <article className="prose prose-zinc mx-auto max-w-3xl">
+        <article className="prose prose-zinc mx-auto max-w-3xl dark:prose-invert">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Términos y Condiciones de Uso
           </h1>
-          <p className="text-sm text-zinc-500">Última actualización: abril de 2026</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Última actualización: abril de 2026</p>
 
           <h2>1. Identificación del sitio</h2>
           <p>
-            El presente sitio web, <strong>tulocal.com.ar</strong> (en adelante, "Tu Local" o "la
-            Plataforma"), es un directorio comercial en línea operado por{" "}
+            El presente sitio web, <strong>tulocal.com.ar</strong> (en adelante, &quot;Tu Local&quot; o &quot;la
+            Plataforma&quot;), es un directorio comercial en línea operado por{" "}
             <strong>Jorge Luis Montivero</strong>, con domicilio en la provincia de Catamarca,
             República Argentina.
           </p>
@@ -120,7 +120,7 @@ export default function TerminosPage() {
           <h2>10. Contacto</h2>
           <p>
             Para consultas sobre estos términos, podés comunicarte a través de la página de{" "}
-            <Link href="/contacto" className="text-emerald-700 underline hover:text-emerald-900">
+            <Link href="/contacto" className="text-emerald-700 underline hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-200">
               Contacto
             </Link>{" "}
             o por WhatsApp al número indicado en el sitio.

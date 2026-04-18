@@ -45,8 +45,8 @@ const DEFAULT_ZOOM = 14;
 const LeafletMap = dynamic(() => import("@/components/leaflet-map"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[500px] items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 sm:h-[600px]">
-      <p className="text-sm text-zinc-500">Cargando mapa…</p>
+    <div className="flex h-[500px] items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 sm:h-[600px]">
+      <p className="text-sm text-zinc-500 dark:text-zinc-300">Cargando mapa…</p>
     </div>
   ),
 });
@@ -97,7 +97,7 @@ export function ShopMap({ shops, categories, subcategories }: ShopMapProps) {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="w-full sm:w-56">
             <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-              <SelectTrigger className="border-zinc-300 bg-white">
+              <SelectTrigger className="border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
                 <SelectValue>{selectedCategoryName}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -117,7 +117,7 @@ export function ShopMap({ shops, categories, subcategories }: ShopMapProps) {
                 value={selectedSubcategory}
                 onValueChange={(v) => setSelectedSubcategory(v ?? "all")}
               >
-                <SelectTrigger className="border-zinc-300 bg-white">
+                <SelectTrigger className="border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
                   <SelectValue>{selectedSubcategoryName}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -133,7 +133,7 @@ export function ShopMap({ shops, categories, subcategories }: ShopMapProps) {
           )}
         </div>
 
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-zinc-500 dark:text-zinc-300">
           {filteredShops.length}{" "}
           {filteredShops.length === 1 ? "local encontrado" : "locales encontrados"}
         </p>

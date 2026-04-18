@@ -11,18 +11,18 @@ export const metadata: Metadata = {
 
 export default function PrivacidadPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-zinc-900">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <main className="flex-1 px-4 py-10 sm:px-6 sm:py-16">
-        <article className="prose prose-zinc mx-auto max-w-3xl">
+        <article className="prose prose-zinc mx-auto max-w-3xl dark:prose-invert">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Política de Privacidad
           </h1>
-          <p className="text-sm text-zinc-500">Última actualización: abril de 2026</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Última actualización: abril de 2026</p>
 
           <h2>1. Responsable del tratamiento</h2>
           <p>
             El responsable del tratamiento de los datos personales recabados a través de{" "}
-            <strong>tulocal.com.ar</strong> (en adelante, "Tu Local" o "la Plataforma") es{" "}
+            <strong>tulocal.com.ar</strong> (en adelante, &quot;Tu Local&quot; o &quot;la Plataforma&quot;) es{" "}
             <strong>Jorge Luis Montivero</strong>, con domicilio en la provincia de Catamarca,
             República Argentina.
           </p>
@@ -133,12 +133,12 @@ export default function PrivacidadPage() {
           </ul>
           <p>
             Para ejercer estos derechos, podés comunicarte a través de la página de{" "}
-            <Link href="/contacto" className="text-emerald-700 underline hover:text-emerald-900">
+            <Link href="/contacto" className="text-emerald-700 underline hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-200">
               Contacto
             </Link>
             .
           </p>
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">
             La AGENCIA DE ACCESO A LA INFORMACIÓN PÚBLICA, en su carácter de Órgano de Control
             de la Ley N.° 25.326, tiene la atribución de atender las denuncias y reclamos que
             interpongan quienes resulten afectados en sus derechos por incumplimiento de las
@@ -164,7 +164,7 @@ export default function PrivacidadPage() {
           <p>
             Para consultas sobre privacidad o protección de datos, podés comunicarte a través de
             la página de{" "}
-            <Link href="/contacto" className="text-emerald-700 underline hover:text-emerald-900">
+            <Link href="/contacto" className="text-emerald-700 underline hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-200">
               Contacto
             </Link>{" "}
             o por WhatsApp al número indicado en el sitio.

@@ -112,16 +112,16 @@ const PLANS: Plan[] = [
 
 export default function PreciosPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-zinc-900">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 sm:py-16">
         <section className="mb-12 text-center sm:mb-16">
-          <Badge className="mb-5 border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100">
+          <Badge className="mb-5 border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700/70 dark:bg-emerald-900/30 dark:text-emerald-100 dark:hover:bg-emerald-900/45">
             Planes flexibles
           </Badge>
           <h1 className="mx-auto max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl lg:leading-[1.15]">
             Potenciá tu comercio en Catamarca
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base text-zinc-600 sm:text-lg">
+          <p className="mx-auto mt-4 max-w-2xl text-base text-zinc-600 dark:text-zinc-300 sm:text-lg">
             Elegí el plan que mejor se adapte a tus necesidades y empezá a
             vender más hoy mismo.
           </p>
@@ -132,10 +132,10 @@ export default function PreciosPage() {
             <Card
               key={plan.name}
               className={cn(
-                "relative flex flex-col overflow-hidden border bg-white shadow-sm transition-shadow hover:shadow-md",
+                "relative flex flex-col overflow-hidden border bg-white shadow-sm transition-shadow hover:shadow-md dark:bg-zinc-900",
                 plan.popular
-                  ? "border-2 border-emerald-600 shadow-emerald-100"
-                  : "border-zinc-200",
+                  ? "border-2 border-emerald-600 shadow-emerald-100 dark:shadow-none"
+                  : "border-zinc-200 dark:border-zinc-700",
               )}
             >
               {plan.popular && (
@@ -145,20 +145,20 @@ export default function PreciosPage() {
               )}
 
               <CardHeader className="space-y-3 pb-4">
-                <CardTitle className="text-lg font-semibold text-zinc-900">
+                <CardTitle className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                   Plan {plan.name}
                 </CardTitle>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold tracking-tight text-zinc-900">
+                  <span className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
                     {plan.price}
                   </span>
                   {plan.period && (
-                    <span className="text-base text-zinc-500">
+                    <span className="text-base text-zinc-500 dark:text-zinc-400">
                       {plan.period}
                     </span>
                   )}
                 </div>
-                <CardDescription className="text-sm leading-relaxed text-zinc-600">
+                <CardDescription className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
                   {plan.description}
                 </CardDescription>
               </CardHeader>
@@ -171,13 +171,13 @@ export default function PreciosPage() {
                         className={cn(
                           "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full",
                           plan.popular
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-zinc-100 text-zinc-600",
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                            : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
                         )}
                       >
                         <Check className="size-3" strokeWidth={3} />
                       </span>
-                      <span className="text-sm leading-snug text-zinc-700">
+                      <span className="text-sm leading-snug text-zinc-700 dark:text-zinc-300">
                         {f.text}
                       </span>
                     </li>
@@ -200,7 +200,7 @@ export default function PreciosPage() {
                     "w-full py-3 text-base font-semibold",
                     plan.popular
                       ? "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700"
-                      : "border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50",
+                      : "border border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800",
                   )}
                 >
                   {plan.cta}
@@ -211,7 +211,7 @@ export default function PreciosPage() {
         </div>
 
         <section className="mt-16 text-center">
-          <p className="mx-auto max-w-xl text-sm leading-relaxed text-zinc-500">
+          <p className="mx-auto max-w-xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
             Todos los planes incluyen tu perfil en el directorio, enlace a
             WhatsApp y acceso al panel de administración. Los precios están
             expresados en pesos argentinos e incluyen IVA. ¿Tenés dudas?{" "}
@@ -219,7 +219,7 @@ export default function PreciosPage() {
               href={`https://wa.me/${WA_NUMBER}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-emerald-700 underline underline-offset-2 hover:text-emerald-800"
+              className="font-medium text-emerald-700 underline underline-offset-2 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
             >
               Escribinos por WhatsApp
             </a>

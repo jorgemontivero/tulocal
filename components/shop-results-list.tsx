@@ -284,33 +284,33 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
   return (
     <section
       id="comercios"
-      className="scroll-mt-24 rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-6"
+      className="scroll-mt-24 rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
       aria-labelledby="resultados-titulo"
     >
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 id="resultados-titulo" className="text-xl font-semibold text-zinc-900">
+          <h2 id="resultados-titulo" className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
             {heading}
           </h2>
-          {subheading && <p className="mt-1 text-sm text-zinc-600">{subheading}</p>}
+          {subheading && <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">{subheading}</p>}
         </div>
       </div>
 
       {shopError ? (
-        <Card className="border border-red-200 bg-red-50">
+        <Card className="border border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-950/35">
           <CardHeader>
-            <CardTitle>No pudimos cargar resultados</CardTitle>
-            <CardDescription className="space-y-1">
+            <CardTitle className="text-red-950 dark:text-red-100">No pudimos cargar resultados</CardTitle>
+            <CardDescription className="space-y-1 text-red-900/90 dark:text-red-200/90">
               <span className="block">
                 Verificá la conexión y las políticas RLS en Supabase. Si migraste
                 recientemente, ejecutá el script{" "}
-                <code className="rounded bg-red-100 px-1 text-xs">
+                <code className="rounded bg-red-100 px-1 text-xs dark:bg-red-950/80 dark:text-red-100">
                   supabase/sql/2026-04-14_fix_profiles_and_admin_rls.sql
                 </code>{" "}
                 y aprobá shops/listings pendientes.
               </span>
               {process.env.NODE_ENV === "development" && (
-                <span className="block font-mono text-xs text-red-800">
+                <span className="block font-mono text-xs text-red-800 dark:text-red-300">
                   {shopError.message}
                 </span>
               )}
@@ -319,8 +319,8 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
         </Card>
       ) : showMarketplaceLayout ? (
         totalTextHitsEmpty ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-slate-50/80 px-6 py-16 text-center">
-            <p className="max-w-md text-lg text-zinc-600">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-slate-50/80 px-6 py-16 text-center dark:border-zinc-600 dark:bg-zinc-800/50">
+            <p className="max-w-md text-lg text-zinc-600 dark:text-zinc-300">
               No encontramos nada para tu búsqueda
             </p>
             <Link
@@ -333,7 +333,7 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
         ) : (
           <div className="space-y-12">
             <div>
-              <h3 className="mb-4 text-lg font-semibold text-zinc-900">Locales</h3>
+              <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">Locales</h3>
               {shops.length > 0 ? (
                 <ShopGridLoadMore
                   key={`shops-market-${filtersKey}`}
@@ -342,7 +342,7 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
                   filters={loadMoreFilters}
                 />
               ) : (
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   No encontramos locales con este nombre
                 </p>
               )}
@@ -350,7 +350,7 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
 
             {hasListings && (
               <div>
-                <h3 className="mb-4 text-lg font-semibold text-zinc-900">
+                <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                   Productos y servicios
                 </h3>
                 <ListingGridLoadMore
@@ -371,8 +371,8 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
           filters={loadMoreFilters}
         />
       ) : hasActiveFilters ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-slate-50/80 px-6 py-16 text-center">
-          <p className="max-w-md text-lg text-zinc-600">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-slate-50/80 px-6 py-16 text-center dark:border-zinc-600 dark:bg-zinc-800/50">
+          <p className="max-w-md text-lg text-zinc-600 dark:text-zinc-300">
             No encontramos locales que coincidan con tu búsqueda
           </p>
           <Link
@@ -383,10 +383,10 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
           </Link>
         </div>
       ) : (
-        <Card className="border border-zinc-200 bg-white">
+        <Card className="border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
           <CardHeader>
-            <CardTitle>Estamos creciendo</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-zinc-900 dark:text-zinc-100">Estamos creciendo</CardTitle>
+            <CardDescription className="text-zinc-600 dark:text-zinc-400">
               Estamos sumando los primeros comercios de la ciudad. ¡Volvé pronto o registrá el
               tuyo desde el panel de vendedores!
             </CardDescription>
@@ -401,15 +401,15 @@ export async function ShopResultsList({ searchParams }: ShopResultsListProps) {
 export function ShopResultsListSkeleton() {
   return (
     <section
-      className="rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm sm:p-6"
+      className="rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
       aria-hidden
     >
-      <div className="mb-6 h-8 max-w-xs animate-pulse rounded-md bg-zinc-200" />
+      <div className="mb-6 h-8 max-w-xs animate-pulse rounded-md bg-zinc-200 dark:bg-zinc-700" />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="h-80 animate-pulse rounded-xl border border-zinc-100 bg-zinc-100/80"
+            className="h-80 animate-pulse rounded-xl border border-zinc-100 bg-zinc-100/80 dark:border-zinc-800 dark:bg-zinc-800/80"
           />
         ))}
       </div>
