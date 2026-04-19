@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { HeroCarousel } from "@/components/hero-carousel";
+import { HomeVendorCta } from "@/components/home-vendor-cta";
 import { SiteFooter } from "@/components/site-footer";
 import { HomeExploreSection } from "@/components/home-explore-section";
 import { SearchBar } from "@/components/search-bar";
@@ -80,6 +81,8 @@ export default async function Home({ searchParams }: HomePageProps) {
             <HeroCarousel />
           </div>
         </section>
+
+        <HomeVendorCta />
 
         <Suspense
           fallback={

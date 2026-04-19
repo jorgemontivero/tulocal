@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Poppins } from "next/font/google";
@@ -64,6 +64,27 @@ const MAX_SHOP_FLYERS = 3;
 const MAX_SHOP_FLYER_BYTES = 5 * 1024 * 1024;
 const FLYER_SLOTS = [0, 1, 2] as const;
 
+type FlyerSlot =
+  | { kind: "empty" }
+  | { kind: "url"; url: string }
+  | { kind: "file"; file: File };
+
+function buildInitialFlyerSlots(urls: string[] | undefined): FlyerSlot[] {
+  const list = [...(urls ?? [])].slice(0, MAX_SHOP_FLYERS);
+  return FLYER_SLOTS.map((i) =>
+    list[i] ? { kind: "url" as const, url: list[i] } : { kind: "empty" as const },
+  );
+}
+
+function FlyerFilePreview({ file, className }: { file: File; className?: string }) {
+  const url = useMemo(() => URL.createObjectURL(file), [file]);
+  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- preview local
+    <img src={url} alt="" className={className} />
+  );
+}
+
 type InitialFieldValues = Partial<
   Pick<FormValues, "name" | "whatsapp" | "description" | "instagram" | "address" | "latitude" | "longitude">
 >;
@@ -114,8 +135,8 @@ export function NewShopForm({
   const [flyerError, setFlyerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
-  const [selectedFlyers, setSelectedFlyers] = useState<Array<File | null>>(
-    Array.from({ length: MAX_SHOP_FLYERS }, () => null),
+  const [flyerSlots, setFlyerSlots] = useState<FlyerSlot[]>(() =>
+    buildInitialFlyerSlots(initialFlyerUrls),
   );
   const flyerInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const canUploadFlyers = initialPlanType === "oro" || initialPlanType === "black";
@@ -146,7 +167,7 @@ export function NewShopForm({
 
   const businessType = form.watch("business_type");
   const categoryId = form.watch("category_id");
-  const selectedFlyerCount = selectedFlyers.filter((flyer) => flyer != null).length;
+  const newFlyerFileCount = flyerSlots.filter((s) => s.kind === "file").length;
 
   const categoriesForType = taxonomyCategories.filter((c) => c.business_type === businessType);
   const subcategoriesForCategory = taxonomySubcategories.filter((s) => s.category_id === categoryId);
@@ -167,14 +188,16 @@ export function NewShopForm({
       return;
     }
 
-    const flyersToUpload = selectedFlyers.filter((flyer): flyer is File => flyer != null);
+    const filesInSlots = flyerSlots
+      .filter((s): s is Extract<FlyerSlot, { kind: "file" }> => s.kind === "file")
+      .map((s) => s.file);
 
-    if (flyersToUpload.length > MAX_SHOP_FLYERS) {
+    if (filesInSlots.length > MAX_SHOP_FLYERS) {
       setFlyerError("Puedes subir hasta 3 flyers.");
       return;
     }
 
-    for (const file of flyersToUpload) {
+    for (const file of filesInSlots) {
       if (!file.type.startsWith("image/")) {
         setFlyerError("Los flyers deben ser imagenes validas.");
         return;
@@ -199,8 +222,17 @@ export function NewShopForm({
       if (values.longitude) formData.set("longitude", values.longitude);
       if (selectedLogo) formData.set("logo", selectedLogo);
       if (canUploadFlyers) {
-        for (const flyer of flyersToUpload) {
-          formData.append("flyers", flyer);
+        formData.set("flyer_edit", "1");
+        for (let i = 0; i < MAX_SHOP_FLYERS; i++) {
+          const slot = flyerSlots[i]!;
+          if (slot.kind === "file") {
+            formData.set(`flyer_slot_${i}`, slot.file);
+            formData.set(`flyer_keep_${i}`, "");
+          } else if (slot.kind === "url") {
+            formData.set(`flyer_keep_${i}`, slot.url);
+          } else {
+            formData.set(`flyer_keep_${i}`, "");
+          }
         }
       }
 
@@ -479,74 +511,119 @@ export function NewShopForm({
                 Flyers promocionales (hasta 3)
               </label>
               <p className="text-xs text-slate-700">
-                Recomendado: relacion de aspecto 2:1 (por ejemplo, 1200x600 px).
+                Recomendado: vertical 4:5 (como post de Instagram), por ejemplo 1080×1350 px. En
+                celular se lee mejor que un flyer muy ancho (2:1).
               </p>
               <div className="grid gap-2 sm:grid-cols-3">
-                {FLYER_SLOTS.map((slot) => (
-                  <div key={slot} className="space-y-2 rounded-md border border-amber-200 bg-white/80 p-2">
-                    <Input
-                      ref={(node) => {
-                        flyerInputRefs.current[slot] = node;
-                      }}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(event) => {
-                        setFlyerError(null);
-                        const file = event.target.files?.[0] ?? null;
-                        if (!file) {
-                          setSelectedFlyers((prev) => {
+                {FLYER_SLOTS.map((slot) => {
+                  const state = flyerSlots[slot]!;
+                  return (
+                    <div
+                      key={slot}
+                      className="space-y-2 rounded-md border border-amber-200 bg-white/80 p-2"
+                    >
+                      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-md border border-amber-100 bg-zinc-100">
+                        {state.kind === "url" ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- URL de storage
+                          <img
+                            src={state.url}
+                            alt={`Flyer ${slot + 1}`}
+                            className="h-full w-full object-contain"
+                          />
+                        ) : state.kind === "file" ? (
+                          <FlyerFilePreview
+                            file={state.file}
+                            className="h-full w-full object-contain"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-xs text-zinc-500">
+                            Vacío
+                          </div>
+                        )}
+                      </div>
+                      <Input
+                        ref={(node) => {
+                          flyerInputRefs.current[slot] = node;
+                        }}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(event) => {
+                          setFlyerError(null);
+                          const file = event.target.files?.[0] ?? null;
+                          if (!file) {
+                            return;
+                          }
+                          if (!file.type.startsWith("image/")) {
+                            setFlyerError("Los flyers deben ser imagenes validas.");
+                            event.currentTarget.value = "";
+                            return;
+                          }
+                          if (file.size > MAX_SHOP_FLYER_BYTES) {
+                            setFlyerError("Cada flyer debe pesar como maximo 5MB.");
+                            event.currentTarget.value = "";
+                            return;
+                          }
+                          setFlyerSlots((prev) => {
                             const next = [...prev];
-                            next[slot] = null;
+                            next[slot] = { kind: "file", file };
                             return next;
                           });
-                          return;
-                        }
-                        if (!file.type.startsWith("image/")) {
-                          setFlyerError("Los flyers deben ser imagenes validas.");
-                          event.currentTarget.value = "";
-                          return;
-                        }
-                        if (file.size > MAX_SHOP_FLYER_BYTES) {
-                          setFlyerError("Cada flyer debe pesar como maximo 5MB.");
-                          event.currentTarget.value = "";
-                          return;
-                        }
-                        setSelectedFlyers((prev) => {
-                          const next = [...prev];
-                          next[slot] = file;
-                          return next;
-                        });
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full border-amber-300 text-amber-800 hover:bg-amber-100"
-                      onClick={() => flyerInputRefs.current[slot]?.click()}
-                    >
-                      {selectedFlyers[slot] ? `Reemplazar flyer ${slot + 1}` : `Subir flyer ${slot + 1}`}
-                    </Button>
-                    <p className="truncate text-xs text-slate-700">
-                      {selectedFlyers[slot]?.name ??
-                        (initialFlyerUrls?.[slot] ? `Flyer ${slot + 1} ya cargado` : "Sin archivo")}
-                    </p>
-                  </div>
-                ))}
+                        }}
+                      />
+                      <div className="flex flex-col gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full border-amber-300 text-amber-800 hover:bg-amber-100"
+                          onClick={() => flyerInputRefs.current[slot]?.click()}
+                        >
+                          {state.kind === "file"
+                            ? `Reemplazar archivo ${slot + 1}`
+                            : state.kind === "url"
+                              ? `Cambiar flyer ${slot + 1}`
+                              : `Subir flyer ${slot + 1}`}
+                        </Button>
+                        {(state.kind === "url" || state.kind === "file") && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-8 w-full text-xs text-red-700 hover:bg-red-50 hover:text-red-800"
+                            onClick={() => {
+                              setFlyerError(null);
+                              const input = flyerInputRefs.current[slot];
+                              if (input) input.value = "";
+                              setFlyerSlots((prev) => {
+                                const next = [...prev];
+                                next[slot] = { kind: "empty" };
+                                return next;
+                              });
+                            }}
+                          >
+                            Quitar flyer {slot + 1}
+                          </Button>
+                        )}
+                      </div>
+                      <p className="line-clamp-2 text-xs text-slate-700">
+                        {state.kind === "file"
+                          ? state.file.name
+                          : state.kind === "url"
+                            ? `Guardado · posición ${slot + 1}`
+                            : "Sin flyer en este espacio"}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
               {flyerError && <p className="text-xs text-red-600">{flyerError}</p>}
-              {selectedFlyerCount > 0 ? (
+              {newFlyerFileCount > 0 ? (
                 <p className="text-xs text-slate-700">
-                  {selectedFlyerCount} flyer(s) nuevo(s) listo(s) para guardar.
-                </p>
-              ) : (initialFlyerUrls?.length ?? 0) > 0 ? (
-                <p className="text-xs text-slate-700">
-                  Ya tienes {(initialFlyerUrls?.length ?? 0)} flyer(s) cargado(s). Si subes nuevos,
-                  se reemplazan.
+                  {newFlyerFileCount} imagen(es) nueva(s) se subirán al guardar.
                 </p>
               ) : (
                 <p className="text-xs text-slate-700">
-                  Se muestran en carrusel en tu página pública.
+                  Podés quitar cualquier flyer con &quot;Quitar&quot; y guardar sin subir otro. Los
+                  cambios aplican al pulsar Guardar cambios.
                 </p>
               )}
             </div>

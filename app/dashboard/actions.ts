@@ -212,7 +212,7 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
   const slug = slugify(parsed.data.name);
   const { data: existingShop } = await supabase
     .from("shops")
-    .select("id,logo_url,plan_type")
+    .select("id,logo_url,plan_type,flyer_urls")
     .eq("vendor_id", user.id)
     .maybeSingle();
 
@@ -239,34 +239,68 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     logoUrl = publicData.publicUrl;
   }
 
-  const flyerFiles = formData
-    .getAll("flyers")
-    .filter((f): f is File => f instanceof File && f.size > 0)
-    .slice(0, MAX_SHOP_FLYERS);
-
-  for (const file of flyerFiles) {
-    if (!file.type.startsWith("image/")) {
-      return { ok: false, error: "Los flyers deben ser imagenes validas." };
-    }
-    if (file.size > MAX_SHOP_FLYER_BYTES) {
-      return { ok: false, error: "Cada flyer debe pesar como maximo 5MB." };
-    }
-  }
-
   const allowsFlyers =
     existingShop?.plan_type === "oro" || existingShop?.plan_type === "black";
 
-  let flyerUrls: string[] | null = null;
-  if (flyerFiles.length > 0) {
-    if (!allowsFlyers) {
-      return {
-        ok: false,
-        error: "Los flyers promocionales estan disponibles solo para plan Oro.",
-      };
+  const existingFlyerUrls = parseListingImageUrls(existingShop?.flyer_urls);
+
+  let flyerUrls: string[] | undefined = undefined;
+  const flyerEdit = formData.get("flyer_edit") === "1";
+
+  if (allowsFlyers && flyerEdit) {
+    const finalFlyers: string[] = [];
+    for (let i = 0; i < MAX_SHOP_FLYERS; i++) {
+      const file = formData.get(`flyer_slot_${i}`);
+      if (file instanceof File && file.size > 0) {
+        if (!file.type.startsWith("image/")) {
+          return { ok: false, error: "Los flyers deben ser imagenes validas." };
+        }
+        if (file.size > MAX_SHOP_FLYER_BYTES) {
+          return { ok: false, error: "Cada flyer debe pesar como maximo 5MB." };
+        }
+        const uploaded = await uploadShopFlyerFiles(supabase, user.id, [file]);
+        if (!uploaded.ok) return { ok: false, error: uploaded.error };
+        finalFlyers.push(uploaded.urls[0]!);
+      } else {
+        const keep = String(formData.get(`flyer_keep_${i}`) ?? "").trim();
+        if (keep !== "") {
+          if (!existingFlyerUrls.includes(keep)) {
+            return {
+              ok: false,
+              error: "Flyer no valido. Recarga la pagina e intenta de nuevo.",
+            };
+          }
+          finalFlyers.push(keep);
+        }
+      }
     }
-    const uploadedFlyers = await uploadShopFlyerFiles(supabase, user.id, flyerFiles);
-    if (!uploadedFlyers.ok) return { ok: false, error: uploadedFlyers.error };
-    flyerUrls = uploadedFlyers.urls;
+    flyerUrls = finalFlyers;
+  } else {
+    const flyerFiles = formData
+      .getAll("flyers")
+      .filter((f): f is File => f instanceof File && f.size > 0)
+      .slice(0, MAX_SHOP_FLYERS);
+
+    for (const file of flyerFiles) {
+      if (!file.type.startsWith("image/")) {
+        return { ok: false, error: "Los flyers deben ser imagenes validas." };
+      }
+      if (file.size > MAX_SHOP_FLYER_BYTES) {
+        return { ok: false, error: "Cada flyer debe pesar como maximo 5MB." };
+      }
+    }
+
+    if (flyerFiles.length > 0) {
+      if (!allowsFlyers) {
+        return {
+          ok: false,
+          error: "Los flyers promocionales estan disponibles solo para plan Oro.",
+        };
+      }
+      const uploadedFlyers = await uploadShopFlyerFiles(supabase, user.id, flyerFiles);
+      if (!uploadedFlyers.ok) return { ok: false, error: uploadedFlyers.error };
+      flyerUrls = uploadedFlyers.urls;
+    }
   }
 
   const instagramUsername =

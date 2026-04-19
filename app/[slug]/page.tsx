@@ -314,7 +314,7 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
                 Flyers y novedades destacadas de este comercio.
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-4">
+            <CardContent className="px-0 pb-0">
               <ShopFlyersCarousel flyers={flyerUrls} />
             </CardContent>
           </Card>

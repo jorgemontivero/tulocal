@@ -34,6 +34,7 @@ function SearchBarFallback() {
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/mapa", label: "Mapa" },
+  { href: "/precios", label: "Precios" },
   { href: "/nosotros", label: "Nosotros" },
   { href: "/contacto", label: "Contacto" },
 ] as const;
