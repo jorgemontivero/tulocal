@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/site-footer";
 import {
@@ -165,11 +166,13 @@ export default function NosotrosPage() {
           </div>
 
           <div className="mx-auto mt-8 flex max-w-2xl flex-col items-center gap-8 rounded-2xl border border-zinc-100 bg-white px-6 py-10 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:items-start sm:px-10 sm:text-left">
-            <div
-              className="flex size-28 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 to-emerald-200 text-4xl font-bold text-emerald-800 ring-4 ring-emerald-100/60 dark:from-emerald-700 dark:to-emerald-900 dark:text-emerald-100 dark:ring-emerald-900/70"
-              aria-hidden
-            >
-              JM
+            <div className="relative size-28 shrink-0 overflow-hidden rounded-full ring-4 ring-emerald-100/60 dark:ring-emerald-900/70">
+              <Image
+                src="/fundador.jpg"
+                alt="Jorge Luis Montivero, Fundador de tulocal.com.ar"
+                fill
+                className="object-cover"
+              />
             </div>
             <div className="text-center sm:text-left">
               <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Jorge Luis Montivero</h3>

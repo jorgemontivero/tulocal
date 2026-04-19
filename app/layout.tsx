@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { THEME_KEY } from "@/lib/theme-constants";
 import { themeFromCookieValue } from "@/lib/theme-cookie";
 import { cn } from "@/lib/utils";
+import { PwaRegistry } from "@/components/pwa-registry";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -82,6 +83,12 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Tu Local",
+  },
 };
 
 export default async function RootLayout({
@@ -111,6 +118,7 @@ export default async function RootLayout({
           <SpeedInsights />
           <CookieBanner />
           <PromoPopup />
+          <PwaRegistry />
         </ThemeProvider>
       </body>
     </html>

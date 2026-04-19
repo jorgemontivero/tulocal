@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { parseListingImageUrls, listingShowsConsultar } from "@/lib/listing-display";
 import type { Json } from "@/lib/database.types";
@@ -40,11 +41,12 @@ export function SearchListingCard({
     >
       <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-zinc-200/80 dark:bg-zinc-800 dark:ring-zinc-600">
         {firstImage ? (
-          // eslint-disable-next-line @next/next/no-img-element -- URLs de storage / externas
-          <img
+          <Image
             src={firstImage}
             alt={`Foto de ${title} — ${shopName}`}
-            className="size-full object-cover transition-transform group-hover:scale-[1.02]"
+            fill
+            sizes="112px"
+            className="object-cover transition-transform group-hover:scale-[1.02]"
           />
         ) : (
           <div

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -95,11 +96,12 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
             }`}
           >
             {shop.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element -- URLs externas de logos de comercios
-              <img
+              <Image
                 src={shop.logo_url}
                 alt={`Logo de ${shop.name}`}
-                className="max-h-28 max-w-full object-contain"
+                fill
+                sizes="(max-width: 768px) 100vw, 33vw"
+                className="object-contain p-4"
               />
             ) : (
               <span

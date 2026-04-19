@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { parseListingImageUrls } from "@/lib/listing-display";
 import { cn } from "@/lib/utils";
@@ -61,11 +62,15 @@ export function ListingGallery({ imageUrls }: ListingGalleryProps) {
 
   if (imgs.length === 1) {
     return (
-      <img
-        src={imgs[0]}
-        alt="Foto del producto"
-        className="h-44 w-full object-cover"
-      />
+      <div className="relative h-44 w-full">
+        <Image
+          src={imgs[0]}
+          alt="Foto del producto"
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="object-cover"
+        />
+      </div>
     );
   }
 
@@ -85,12 +90,18 @@ export function ListingGallery({ imageUrls }: ListingGalleryProps) {
         )}
       >
         {imgs.map((src, i) => (
-          <img
+          <div
             key={`${src}-${i}`}
-            src={src}
-            alt={`Foto ${i + 1} de ${imgs.length}`}
-            className="h-44 min-w-full shrink-0 snap-center snap-always object-cover"
-          />
+            className="relative h-44 min-w-full shrink-0 snap-center snap-always"
+          >
+            <Image
+              src={src}
+              alt={`Foto ${i + 1} de ${imgs.length}`}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
+            />
+          </div>
         ))}
       </div>
 

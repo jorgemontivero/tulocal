@@ -48,8 +48,25 @@ export default async function Home({ searchParams }: HomePageProps) {
   const { categories: exploreCategories, subcategories: exploreSubcategories } =
     await fetchShopTaxonomyForHome(supabase);
 
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "tulocal.com.ar",
+    url: "https://tulocal.com.ar",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://tulocal.com.ar/?q={search_term_string}",
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
+      <div className="flex min-h-screen flex-col bg-slate-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
         <section className="mb-10 grid gap-10 rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-8 lg:grid-cols-2 lg:items-center lg:gap-12">
           <div className="min-w-0">
@@ -102,5 +119,6 @@ export default async function Home({ searchParams }: HomePageProps) {
 
       <SiteFooter />
     </div>
+    </>
   );
 }

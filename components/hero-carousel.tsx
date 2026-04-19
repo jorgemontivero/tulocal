@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 const SLIDE_MS = 5000;
@@ -48,14 +49,15 @@ export function HeroCarousel() {
       aria-label="Imágenes del comercio local en Catamarca"
     >
       {SLIDES.map((slide, i) => (
-        <img
+        <Image
           key={slide.src}
           src={slide.src}
           alt={slide.alt}
-          loading={i === 0 ? "eager" : "lazy"}
-          fetchPriority={i === 0 ? "high" : "low"}
+          fill
+          priority={i === 0}
+          sizes="100vw"
           className={cn(
-            "absolute inset-0 size-full object-cover transition-opacity duration-700 ease-in-out motion-reduce:transition-none",
+            "object-cover transition-opacity duration-700 ease-in-out motion-reduce:transition-none",
             i === index ? "z-[1] opacity-100" : "z-0 opacity-0",
           )}
         />

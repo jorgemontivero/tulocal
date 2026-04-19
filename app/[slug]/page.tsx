@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { createClient } from "@/utils/supabase/server";
+import { supabasePublic } from "@/utils/supabase/public";
 import { StorefrontGridLoadMore } from "@/components/storefront-grid-load-more";
 import type { StorefrontListing } from "@/app/actions/load-more-listings";
 import { LISTINGS_PAGE_SIZE } from "@/lib/constants";
@@ -23,6 +23,9 @@ const SITE_URL = "https://tulocal.com.ar";
 type ShopPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+// Revalidate cache every 1 hour (ISR)
+export const revalidate = 3600;
 
 function shortMetaDescription(
   name: string,
@@ -124,7 +127,7 @@ export async function generateMetadata(
   { params }: ShopPageProps,
 ): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = await createClient();
+  const supabase = supabasePublic;
 
   const { data: shop } = await supabase
     .from("shops")
@@ -166,22 +169,18 @@ export async function generateMetadata(
       description,
       url: canonicalUrl,
       siteName: "tulocal.com.ar",
-      images: shop.logo_url
-        ? [{ url: shop.logo_url, alt: `Logo de ${shop.name}` }]
-        : [{ url: "/og-image.png", width: 1200, height: 630 }],
     },
     twitter: {
-      card: shop.logo_url ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description,
-      images: shop.logo_url ? [shop.logo_url] : ["/og-image.png"],
     },
   };
 }
 
 export default async function ShopCatalogPage({ params }: ShopPageProps) {
   const { slug } = await params;
-  const supabase = await createClient();
+  const supabase = supabasePublic;
 
   const { data: shop } = await supabase
     .from("shops")

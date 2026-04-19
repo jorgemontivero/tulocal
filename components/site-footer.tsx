@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Dialog } from "@base-ui/react/dialog";
-import { X, Gift } from "lucide-react";
+import { X, Gift, Download } from "lucide-react";
 
 import { PromoForm, PromoFormSuccess } from "@/components/promo-form";
 
@@ -66,6 +66,46 @@ function PromoFooterModal() {
   );
 }
 
+function InstallPwaLink() {
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  if (!installPrompt) return null;
+
+  const handleInstallClick = async () => {
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") {
+      setInstallPrompt(null);
+    }
+  };
+
+  return (
+    <>
+      <button
+        onClick={handleInstallClick}
+        className="inline-flex items-center gap-1 font-medium text-emerald-200 hover:text-white transition-colors"
+      >
+        <Download className="size-3.5" />
+        Instalar App
+      </button>
+      <span aria-hidden>·</span>
+    </>
+  );
+}
+
+
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-emerald-900/40 bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 text-white ring-1 ring-inset ring-white/10 dark:border-emerald-400/20 dark:from-emerald-900 dark:via-emerald-950 dark:to-zinc-950 dark:ring-emerald-400/10">
@@ -94,8 +134,9 @@ export function SiteFooter() {
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4 text-xs text-white/60">
           <span>© {new Date().getFullYear()} tulocal.com.ar</span>
           <span aria-hidden>·</span>
-          <Link href="/terminos">Términos y condiciones</Link>
-          <Link href="/privacidad">Política de privacidad</Link>
+          <InstallPwaLink />
+          <Link href="/terminos" className="hover:text-white transition-colors">Términos y condiciones</Link>
+          <Link href="/privacidad" className="hover:text-white transition-colors">Política de privacidad</Link>
         </div>
       </div>
     </footer>
