@@ -99,7 +99,7 @@ export function ShopFlyersCarousel({ flyers }: { flyers: string[] }) {
         {flyers.map((src, i) => (
           <div
             key={`${src}-${i}`}
-            className="relative aspect-square shrink-0 overflow-hidden bg-zinc-200 dark:bg-zinc-900"
+            className="relative aspect-[4/5] shrink-0 overflow-hidden bg-muted"
             style={{ width: slideW > 0 ? slideW : "100%" }}
           >
             <Image
@@ -107,7 +107,7 @@ export function ShopFlyersCarousel({ flyers }: { flyers: string[] }) {
               alt={`Flyer ${i + 1}`}
               fill
               sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
               loading={i === 0 ? "eager" : "lazy"}
             />
           </div>
@@ -150,7 +150,7 @@ export function ShopFlyersCarousel({ flyers }: { flyers: string[] }) {
               onClick={() => setIndex(i)}
               className={cn(
                 "h-2.5 rounded-full transition-all",
-                i === index ? "w-7 bg-white" : "w-2.5 bg-white/60 hover:bg-white/85",
+                i === pageIndex ? "w-7 bg-white" : "w-2.5 bg-white/60 hover:bg-white/85",
               )}
             />
           ))}

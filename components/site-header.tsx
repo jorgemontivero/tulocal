@@ -84,7 +84,7 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
 
   return (
     <>
-      <header className="border-b border-emerald-950/30 bg-emerald-800 text-white shadow-sm dark:border-emerald-200/10 dark:bg-emerald-950">
+      <header className="border-b border-emerald-900/40 bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 text-white shadow-sm ring-1 ring-inset ring-white/10 dark:border-emerald-400/20 dark:from-emerald-900 dark:via-emerald-950 dark:to-zinc-950 dark:ring-emerald-400/10">
         <div className="mx-auto w-full max-w-7xl px-3 py-3 sm:px-4 sm:py-4">
           <div className="flex flex-row flex-nowrap items-center justify-between gap-2">
             {/* Logo */}
@@ -220,7 +220,7 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
 
           {/* Panel */}
           <nav
-            className="absolute top-0 right-0 flex h-full w-72 max-w-[85vw] flex-col bg-emerald-800 shadow-2xl animate-in slide-in-from-right duration-200 dark:bg-emerald-950"
+            className="absolute top-0 right-0 flex h-full w-72 max-w-[85vw] flex-col bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 shadow-2xl animate-in slide-in-from-right duration-200 dark:from-emerald-900 dark:via-emerald-950 dark:to-zinc-950"
             aria-label="Menú principal"
           >
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">

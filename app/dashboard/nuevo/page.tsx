@@ -55,6 +55,7 @@ export default async function NewShopPage() {
           initialLogoUrl={shopData?.logo_url ?? undefined}
           initialPlanType={shopData?.plan_type ?? null}
           initialFlyerUrls={parseListingImageUrls(shopData?.flyer_urls)}
+          hasExistingShop={!!existingShop}
         />
       </div>
     </main>

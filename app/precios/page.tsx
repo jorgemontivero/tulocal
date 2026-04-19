@@ -3,6 +3,7 @@ import {
   Check,
   Star,
   BarChart3,
+  Images,
   MapPin,
   MessageCircle,
   Package,
@@ -100,6 +101,10 @@ const PLANS: Plan[] = [
       { text: "Hasta 80 productos publicados", icon: Package },
       { text: "Banner destacado en la Home", icon: Star },
       { text: "Pin con tu logo en el mapa", icon: MapPin },
+      {
+        text: "Flyers promocionales en el catálogo público de tu local (hasta 3)",
+        icon: Images,
+      },
       {
         text: "Reporte estadístico mensual de rendimiento",
         icon: BarChart3,

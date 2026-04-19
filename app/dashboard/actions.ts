@@ -185,6 +185,8 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     description: formData.get("description"),
   });
 
+  const omitShopLocation = String(formData.get("omit_shop_location") ?? "") === "1";
+
   const rawAddress = String(formData.get("address") ?? "").trim();
   const rawLat = String(formData.get("latitude") ?? "").trim();
   const rawLng = String(formData.get("longitude") ?? "").trim();
@@ -340,6 +342,15 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
 
   const categoryLabel = `${catRow.name} — ${subRow.name}`;
 
+  const locationPayload =
+    omitShopLocation && existingShop
+      ? {}
+      : {
+          address: locationAddress,
+          latitude: locationLat,
+          longitude: locationLng,
+        };
+
   const payload = {
     vendor_id: user.id,
     name: parsed.data.name,
@@ -353,9 +364,7 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     description: parsed.data.description,
     logo_url: logoUrl,
     flyer_urls: flyerUrls ?? undefined,
-    address: locationAddress,
-    latitude: locationLat,
-    longitude: locationLng,
+    ...locationPayload,
   };
 
   const writeQuery = existingShop
@@ -431,6 +440,54 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
   }
 
   return { ok: false, error: "No pudimos guardar tu local. Intenta nuevamente." };
+}
+
+/** Solo actualiza dirección y coordenadas (panel "Editar ubicación"). */
+export async function updateShopLocation(formData: FormData): Promise<CreateShopResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "Tu sesion expiro. Vuelve a iniciar sesion." };
+  }
+
+  const rawAddress = String(formData.get("address") ?? "").trim();
+  const rawLat = String(formData.get("latitude") ?? "").trim();
+  const rawLng = String(formData.get("longitude") ?? "").trim();
+  const parsedLat = rawLat ? Number.parseFloat(rawLat) : null;
+  const parsedLng = rawLng ? Number.parseFloat(rawLng) : null;
+  const locationAddress = rawAddress || null;
+  const locationLat =
+    parsedLat != null && Number.isFinite(parsedLat) ? parsedLat : null;
+  const locationLng =
+    parsedLng != null && Number.isFinite(parsedLng) ? parsedLng : null;
+
+  const { data: shop, error: selErr } = await supabase
+    .from("shops")
+    .select("id")
+    .eq("vendor_id", user.id)
+    .maybeSingle();
+
+  if (selErr || !shop) {
+    return { ok: false, error: "No encontramos tu local. Configuralo primero." };
+  }
+
+  const { error } = await supabase
+    .from("shops")
+    .update({
+      address: locationAddress,
+      latitude: locationLat,
+      longitude: locationLng,
+    })
+    .eq("id", shop.id);
+
+  if (error) {
+    return { ok: false, error: "No pudimos guardar la ubicacion. Intenta nuevamente." };
+  }
+
+  return { ok: true };
 }
 
 const MAX_LISTING_IMAGES = 4;

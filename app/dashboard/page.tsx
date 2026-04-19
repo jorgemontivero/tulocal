@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { CatalogManager, type ListingItem } from "@/app/dashboard/catalog-manager";
 import { signOut } from "@/app/auth/actions";
 import { createClient } from "@/utils/supabase/server";
+import { PLAN_LABELS } from "@/lib/admin";
+import { parseListingImageUrls } from "@/lib/listing-display";
 
 const brandSans = Poppins({
   subsets: ["latin"],
@@ -59,11 +61,49 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     .eq("vendor_id", user.id)
     .maybeSingle();
 
-  const whatsapp =
-    (shop as { whatsapp_number?: string | null } | null)?.whatsapp_number ?? null;
-  const logoUrl = (shop as { logo_url?: string | null } | null)?.logo_url ?? null;
-  const shopSlug = (shop as { slug?: string | null } | null)?.slug ?? null;
-  const initial = (shop?.name ?? "L").slice(0, 1).toUpperCase();
+  const shopRow = shop as {
+    name: string;
+    whatsapp_number?: string | null;
+    logo_url?: string | null;
+    slug?: string | null;
+    category?: string | null;
+    business_type?: string | null;
+    instagram_username?: string | null;
+    description?: string | null;
+    address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    plan_type?: string | null;
+    flyer_urls?: unknown;
+  };
+
+  const whatsapp = shopRow.whatsapp_number ?? null;
+  const logoUrl = shopRow.logo_url ?? null;
+  const shopSlug = shopRow.slug ?? null;
+  const initial = (shopRow.name ?? "L").slice(0, 1).toUpperCase();
+  const rubroLabel = shopRow.category?.trim() || "Sin rubro indicado";
+  const tipoNegocioLabel =
+    shopRow.business_type === "servicio"
+      ? "Servicios"
+      : shopRow.business_type === "producto"
+        ? "Venta de productos"
+        : "Sin tipo indicado";
+  const instagramHandle = shopRow.instagram_username?.trim();
+  const planLabel = PLAN_LABELS[shopRow.plan_type ?? ""] ?? shopRow.plan_type ?? "—";
+  const hasMapCoords =
+    shopRow.latitude != null &&
+    shopRow.longitude != null &&
+    Number.isFinite(Number(shopRow.latitude)) &&
+    Number.isFinite(Number(shopRow.longitude));
+  const addressLine = shopRow.address?.trim();
+  const ubicacionResumen = addressLine
+    ? addressLine
+    : hasMapCoords
+      ? "Ubicación en mapa (sin dirección escrita)"
+      : "Sin ubicación en el mapa";
+  const flyersPremium =
+    shopRow.plan_type === "oro" || shopRow.plan_type === "black";
+  const flyerCount = flyersPremium ? parseListingImageUrls(shopRow.flyer_urls).length : 0;
   const { data: listings } = shop
     ? await supabase
         .from("listings")
@@ -133,6 +173,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </Card>
         )}
 
+        {params.success === "ubicacion-guardada" && (
+          <Card className="border border-emerald-200 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-900/25">
+            <CardContent className="pt-4 text-sm text-emerald-700 dark:text-emerald-200">
+              Ubicación guardada correctamente.
+            </CardContent>
+          </Card>
+        )}
+
         {!shop ? (
           <Card className="border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             <CardHeader>
@@ -163,20 +211,53 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="pb-2">
-                  <Avatar size="lg" className="size-16">
-                    {logoUrl && <AvatarImage src={logoUrl} alt={`Logo de ${shop.name}`} />}
-                    <AvatarFallback className="bg-slate-100 font-semibold text-slate-700 dark:bg-zinc-800 dark:text-zinc-200">
+                  <Avatar size="lg" className="size-28 sm:size-32">
+                    {logoUrl && <AvatarImage src={logoUrl} alt={`Logo de ${shopRow.name}`} />}
+                    <AvatarFallback className="bg-slate-100 text-3xl font-semibold text-slate-700 sm:text-4xl dark:bg-zinc-800 dark:text-zinc-200">
                       {initial}
                     </AvatarFallback>
                   </Avatar>
                 </div>
                 <p className="text-sm text-slate-700 dark:text-zinc-300">Nombre</p>
-                <p className="font-semibold text-slate-900 dark:text-zinc-100">{shop.name}</p>
+                <p className="font-semibold text-slate-900 dark:text-zinc-100">{shopRow.name}</p>
+
+                <p className="text-sm text-slate-700 dark:text-zinc-300">Rubro</p>
+                <p className="font-semibold text-slate-900 dark:text-zinc-100">{rubroLabel}</p>
+
+                <p className="text-sm text-slate-700 dark:text-zinc-300">Tipo de negocio</p>
+                <p className="font-semibold text-slate-900 dark:text-zinc-100">{tipoNegocioLabel}</p>
+
+                <p className="text-sm text-slate-700 dark:text-zinc-300">Plan</p>
+                <p className="font-semibold text-slate-900 dark:text-zinc-100">{planLabel}</p>
 
                 <p className="text-sm text-slate-700 dark:text-zinc-300">WhatsApp</p>
                 <p className="font-semibold text-slate-900 dark:text-zinc-100">{whatsapp ?? "No configurado"}</p>
 
-                <div className="flex flex-wrap gap-2 pt-1">
+                <p className="text-sm text-slate-700 dark:text-zinc-300">Instagram</p>
+                <p className="font-semibold text-slate-900 dark:text-zinc-100">
+                  {instagramHandle ? `@${instagramHandle}` : "No indicado"}
+                </p>
+
+                <p className="text-sm text-slate-700 dark:text-zinc-300">Descripción</p>
+                <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-relaxed text-slate-900 dark:text-zinc-100">
+                  {shopRow.description?.trim() || "Sin descripción"}
+                </p>
+
+                <p className="text-sm text-slate-700 dark:text-zinc-300">Ubicación</p>
+                <p className="text-sm leading-snug text-slate-900 dark:text-zinc-100">{ubicacionResumen}</p>
+
+                {flyersPremium && (
+                  <>
+                    <p className="text-sm text-slate-700 dark:text-zinc-300">Flyers en el catálogo</p>
+                    <p className="font-semibold text-slate-900 dark:text-zinc-100">
+                      {flyerCount === 0
+                        ? "Ninguno cargado"
+                        : `${flyerCount} flyer${flyerCount === 1 ? "" : "s"}`}
+                    </p>
+                  </>
+                )}
+
+                <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:flex-wrap">
                   <Button
                     render={
                       <Link href="/dashboard/nuevo" />
@@ -184,7 +265,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     variant="outline"
                     className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
                   >
-                    Editar Datos
+                    Editar datos
+                  </Button>
+                  <Button
+                    render={<Link href="/dashboard/ubicacion" />}
+                    variant="outline"
+                    className="border-slate-400 text-slate-800 hover:bg-slate-50 dark:border-zinc-500 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    Editar ubicación
                   </Button>
                   {shopSlug ? (
                     <Button
