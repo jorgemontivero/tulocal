@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { createClient } from "@/utils/supabase/server";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 export const alt = "tulocal.com.ar";
 export const size = {
