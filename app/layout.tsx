@@ -45,9 +45,12 @@ export const metadata: Metadata = {
   authors: [{ name: "Jorge Luis Montivero" }],
   creator: "tulocal.com.ar",
   icons: {
-    icon: "/logo-tulocal.png",
-    shortcut: "/logo-tulocal.png",
-    apple: "/logo-tulocal.png",
+    icon: [
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
   verification: {
     google: "Ht1onVAS9SK-ODrLIQBPzsUpsk0GlGhtOhtZhOfilrw",
@@ -83,7 +86,6 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
