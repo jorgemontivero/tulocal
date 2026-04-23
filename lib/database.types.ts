@@ -255,6 +255,7 @@ export type Database = {
       visitor_leads: {
         Row: {
           id: string;
+          email: string | null;
           name: string;
           contact_method: string;
           contact_value: string;
@@ -266,6 +267,7 @@ export type Database = {
         };
         Insert: {
           id?: string;
+          email?: string | null;
           name: string;
           contact_method: string;
           contact_value: string;
@@ -277,6 +279,7 @@ export type Database = {
         };
         Update: {
           id?: string;
+          email?: string | null;
           name?: string;
           contact_method?: string;
           contact_value?: string;

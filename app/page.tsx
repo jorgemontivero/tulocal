@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { HomeVendorCta } from "@/components/home-vendor-cta";
+import { NewsletterLeadForm } from "@/components/newsletter-lead-form";
 import { SiteFooter } from "@/components/site-footer";
 import { HomeExploreSection } from "@/components/home-explore-section";
 import { SearchBar } from "@/components/search-bar";
@@ -97,6 +98,14 @@ export default async function Home({ searchParams }: HomePageProps) {
           <div className="min-w-0 w-full">
             <HeroCarousel />
           </div>
+        </section>
+
+        <section className="mb-10 rounded-2xl border border-emerald-200/80 bg-emerald-50/80 p-5 shadow-sm dark:border-emerald-900/70 dark:bg-emerald-950/30 sm:p-6">
+          <NewsletterLeadForm
+            source="home_inline"
+            title="Recibí promos de Catamarca"
+            description="Te enviamos novedades y cupones de comercios locales. Sin spam."
+          />
         </section>
 
         <HomeVendorCta />

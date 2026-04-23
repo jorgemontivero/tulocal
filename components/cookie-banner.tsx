@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -17,13 +17,9 @@ function isConsentValid(): boolean {
 }
 
 export function CookieBanner() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (!isConsentValid()) {
-      setVisible(true);
-    }
-  }, []);
+  const [visible, setVisible] = useState(() =>
+    typeof window === "undefined" ? false : !isConsentValid(),
+  );
 
   function accept() {
     localStorage.setItem(STORAGE_KEY, String(Date.now()));

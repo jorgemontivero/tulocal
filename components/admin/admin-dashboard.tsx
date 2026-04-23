@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   LayoutDashboard,
   Shield,
@@ -78,7 +79,8 @@ export function AdminDashboard({ data }: { data: AdminData }) {
           </nav>
           <div className="border-t border-zinc-100 px-3 py-3">
             <Button
-              render={<a href="/dashboard" />}
+              render={<Link href="/dashboard" />}
+              nativeButton={false}
               variant="ghost"
               className="w-full justify-start gap-2 text-sm text-zinc-500"
             >

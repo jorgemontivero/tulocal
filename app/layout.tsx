@@ -112,7 +112,10 @@ export default async function RootLayout({
         initialTheme === "dark" && "dark",
       )}
     >
-      <body className="flex min-h-full flex-col bg-background">
+      <body
+        className="flex min-h-full flex-col bg-background"
+        suppressHydrationWarning
+      >
         <ThemeProvider initialTheme={initialTheme}>
           <SiteHeaderWrapper />
           {children}

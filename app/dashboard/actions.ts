@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { parseListingImageUrls } from "@/lib/listing-display";
+import { sendMerchantWelcome } from "@/lib/mail-service";
 
 const newShopSchema = z.object({
   name: z.string().min(2, "Ingresa un nombre valido."),
@@ -172,6 +173,22 @@ async function uploadShopFlyerFiles(
       error: "No pudimos subir uno de los flyers. Intenta nuevamente.",
     };
   }
+}
+
+function triggerMerchantWelcomeEmail(email: string | null | undefined, shopName: string): void {
+  const to = email?.trim();
+  if (!to) {
+    console.info("[create-shop] Welcome email skipped: user has no email.");
+    return;
+  }
+
+  void sendMerchantWelcome(to, shopName).catch((error) => {
+    console.error("[create-shop] Unexpected welcome email failure:", {
+      to,
+      shopName,
+      message: error instanceof Error ? error.message : String(error),
+    });
+  });
 }
 
 export async function createShop(formData: FormData): Promise<CreateShopResult> {
@@ -414,6 +431,9 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
   }
 
   if (!error) {
+    if (!existingShop) {
+      triggerMerchantWelcomeEmail(user.email, parsed.data.name);
+    }
     return { ok: true };
   }
 
@@ -435,6 +455,9 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     const { error: fallbackError } = await fallbackQuery;
 
     if (!fallbackError) {
+      if (!existingShop) {
+        triggerMerchantWelcomeEmail(user.email, parsed.data.name);
+      }
       return { ok: true };
     }
   }

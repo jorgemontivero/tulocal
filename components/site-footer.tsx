@@ -6,6 +6,12 @@ import { Dialog } from "@base-ui/react/dialog";
 import { X, Gift, Download } from "lucide-react";
 
 import { PromoForm, PromoFormSuccess } from "@/components/promo-form";
+import { NewsletterLeadForm } from "@/components/newsletter-lead-form";
+
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
 
 function PromoFooterModal() {
   const [open, setOpen] = useState(false);
@@ -67,10 +73,11 @@ function PromoFooterModal() {
 }
 
 function InstallPwaLink() {
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
+    const handleBeforeInstallPrompt: EventListener = (event) => {
+      const e = event as BeforeInstallPromptEvent;
       e.preventDefault();
       setInstallPrompt(e);
     };
@@ -110,6 +117,16 @@ export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-emerald-900/40 bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 text-white ring-1 ring-inset ring-white/10 dark:border-emerald-400/20 dark:from-emerald-900 dark:via-emerald-950 dark:to-zinc-950 dark:ring-emerald-400/10">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+        <section className="mb-6 rounded-xl border border-white/15 bg-white/5 p-4 sm:p-5">
+          <NewsletterLeadForm
+            source="footer_newsletter"
+            compact
+            dark
+            title="Recibí promos de Catamarca"
+            description="Sumate con tu email y recibi cupones de bienvenida y ofertas locales."
+          />
+        </section>
+
         <div className="flex flex-col gap-4 text-sm sm:flex-row sm:items-center sm:justify-between">
           <nav className="flex flex-wrap items-center gap-4">
             <Link className="text-white/90 hover:text-white" href="/">

@@ -19,8 +19,6 @@ function escapeHtmlAttr(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 }
 
-const TO_EMAIL = "consultas@tulocal.com.ar";
-
 export async function sendContactMessage(
   input: unknown,
 ): Promise<ContactActionResult> {
@@ -43,12 +41,31 @@ export async function sendContactMessage(
         "El envio de correo no esta configurado. Intenta mas tarde o escribinos por WhatsApp.",
     };
   }
-
-  const from =
-    process.env.RESEND_FROM_EMAIL?.trim() ||
-    "Tu Local <onboarding@resend.dev>";
+  const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
+  if (!fromEmail) {
+    console.error(
+      "[contacto] Falta RESEND_FROM_EMAIL en el servidor. Debe ser un correo verificado en Resend (ej: Tu Local <consultas@tulocal.com.ar>).",
+    );
+    return {
+      ok: false,
+      error:
+        "El envio de correo no esta configurado correctamente. Intenta mas tarde o escribinos por WhatsApp.",
+    };
+  }
+  const toEmail = process.env.CONTACT_TO_EMAIL?.trim();
+  if (!toEmail) {
+    console.error(
+      "[contacto] Falta CONTACT_TO_EMAIL en el servidor. Debe ser la bandeja de destino (ej: info@tulocal.com.ar).",
+    );
+    return {
+      ok: false,
+      error:
+        "El envio de correo no esta configurado correctamente. Intenta mas tarde o escribinos por WhatsApp.",
+    };
+  }
 
   const { name, email, phone, subject, message } = parsed.data;
+  const subjectName = name.replace(/[\r\n]+/g, " ").trim();
   const safeName = escapeHtml(name);
   const safeEmail = escapeHtml(email);
   const mailHref = `mailto:${encodeURIComponent(email)}`;
@@ -70,10 +87,10 @@ export async function sendContactMessage(
   const resend = new Resend(apiKey);
 
   const { error } = await resend.emails.send({
-    from,
-    to: TO_EMAIL,
+    from: fromEmail,
+    to: toEmail,
     replyTo: email,
-    subject: `[Contacto web] ${subject}`,
+    subject: `Nueva consulta en tu local - ${subjectName}`,
     html: `
 <!DOCTYPE html>
 <html lang="es">
@@ -96,7 +113,7 @@ export async function sendContactMessage(
               <p style="margin:0 0 16px;"><strong style="color:#0f172a;">Nombre</strong><br />${safeName}</p>
               <p style="margin:0 0 16px;"><strong style="color:#0f172a;">Email</strong><br /><a href="${mailHref}" style="color:#059669;">${safeEmail}</a></p>
               ${phoneRowHtml}
-              <p style="margin:0 0 16px;"><strong style="color:#0f172a;">Asunto</strong><br />${safeSubject}</p>
+              <p style="margin:0 0 16px;"><strong style="color:#0f172a;">Asunto de la consulta</strong><br />${safeSubject}</p>
               <p style="margin:0 0 8px;"><strong style="color:#0f172a;">Mensaje</strong></p>
               <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;background:#f8fafc;color:#334155;">
                 ${safeMessage}

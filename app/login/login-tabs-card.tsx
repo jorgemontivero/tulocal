@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Poppins } from "next/font/google";
 import { useForm } from "react-hook-form";
@@ -145,6 +145,16 @@ function AuthTabForm({
         {form.formState.errors.password && (
           <p className="text-xs text-red-600">{form.formState.errors.password.message}</p>
         )}
+        {!isSignUp ? (
+          <div className="text-right">
+            <Link
+              href="/auth/forgot-password"
+              className="text-xs font-medium text-emerald-700 hover:text-emerald-800 hover:underline"
+            >
+              Olvide mi contrasena
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       {serverError && <p className="text-sm text-red-600">{serverError}</p>}
@@ -166,7 +176,9 @@ function AuthTabForm({
 
 export function LoginTabsCard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [message, setMessage] = useState<string | null>(null);
+  const passwordUpdated = searchParams.get("password") === "updated";
 
   return (
     <Card className="w-full border border-zinc-200 bg-white shadow-sm">
@@ -192,6 +204,36 @@ export function LoginTabsCard() {
         <CardDescription className="text-center text-slate-700">
           Accede a tu cuenta o registrate para publicar tu local.
         </CardDescription>
+        {passwordUpdated ? (
+          <div
+            role="status"
+            className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
+          >
+            <p className="font-semibold">Tu contrasena se actualizo correctamente.</p>
+            <p className="mt-1 text-emerald-800">
+              Ya podes iniciar sesion con tu nueva contrasena o ir al panel si seguis conectado.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-50"
+                onClick={() => router.push("/dashboard")}
+              >
+                Ir al panel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="bg-emerald-600 text-white hover:bg-emerald-700"
+                onClick={() => router.replace("/login")}
+              >
+                Cerrar aviso
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="signin" className="w-full">
