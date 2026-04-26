@@ -30,10 +30,22 @@ function saludoNombreUsuario(user: {
   email?: string | null;
   user_metadata?: Record<string, unknown> | null;
 }): string {
-  const nombre = String(user.user_metadata?.nombre ?? "").trim();
-  const apellido = String(user.user_metadata?.apellido ?? "").trim();
-  const armado = [nombre, apellido].filter(Boolean).join(" ");
-  return armado || user.email || "Usuario";
+  const metadata = user.user_metadata ?? {};
+
+  const nombre = String(metadata.nombre ?? "").trim();
+  const apellido = String(metadata.apellido ?? "").trim();
+  const nombreLocal = [nombre, apellido].filter(Boolean).join(" ");
+  if (nombreLocal) return nombreLocal;
+
+  const fullName = String(metadata.full_name ?? metadata.name ?? "").trim();
+  if (fullName) return fullName;
+
+  const givenName = String(metadata.given_name ?? "").trim();
+  const familyName = String(metadata.family_name ?? "").trim();
+  const oauthName = [givenName, familyName].filter(Boolean).join(" ");
+  if (oauthName) return oauthName;
+
+  return user.email || "Usuario";
 }
 
 type DashboardPageProps = {

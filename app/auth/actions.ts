@@ -12,6 +12,7 @@ export type AuthActionState = {
   error?: string;
   success?: string;
   requiresEmailConfirmation?: boolean;
+  redirectTo?: string;
 };
 
 export async function signIn(input: unknown): Promise<AuthActionState> {
@@ -111,6 +112,28 @@ export async function requestPasswordReset(input: unknown): Promise<AuthActionSt
     success:
       "Si el email existe, te enviamos un enlace para restablecer la contrasena.",
   };
+}
+
+export async function signInWithGoogle(): Promise<AuthActionState> {
+  const supabase = await createClient();
+  const baseUrl = getSiteBaseUrlFromEnv() ?? (await getRequestBaseUrl());
+  const redirectTo = `${baseUrl.replace(/\/$/, "")}/auth/callback`;
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo,
+    },
+  });
+
+  if (error || !data.url) {
+    console.error("[auth] signInWithOAuth(google):", error?.message ?? "missing url");
+    return {
+      error: "No pudimos iniciar sesión con Google. Intenta nuevamente.",
+    };
+  }
+
+  return { redirectTo: data.url };
 }
 
 export async function signOut(): Promise<void> {

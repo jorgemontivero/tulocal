@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Poppins } from "next/font/google";
+import { LogIn } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { signIn, signUp } from "@/app/auth/actions";
+import { signIn, signInWithGoogle, signUp } from "@/app/auth/actions";
 import { signInSchema, signUpSchema } from "@/lib/auth-schemas";
 
 const brandSans = Poppins({
@@ -178,6 +179,9 @@ export function LoginTabsCard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [message, setMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
+  const [googleError, setGoogleError] = useState<string | null>(null);
+  const [isGooglePending, startGoogleTransition] = useTransition();
   const passwordUpdated = searchParams.get("password") === "updated";
   const verificationFailed = searchParams.get("error") === "VerificationFailed";
 
@@ -248,7 +252,21 @@ export function LoginTabsCard() {
         ) : null}
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="signin" className="w-full">
+        {!verificationFailed && message ? (
+          <div
+            role="status"
+            className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
+          >
+            <p className="font-semibold">Registro exitoso.</p>
+            <p className="mt-1 text-emerald-800">{message}</p>
+          </div>
+        ) : null}
+
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as "signin" | "signup")}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Iniciar Sesion</TabsTrigger>
             <TabsTrigger value="signup">Registrarse</TabsTrigger>
@@ -269,12 +287,49 @@ export function LoginTabsCard() {
               mode="signup"
               onSuccess={(successMessage) => {
                 setMessage(successMessage);
+                setActiveTab("signup");
               }}
             />
           </TabsContent>
         </Tabs>
 
-        {message && <p className="mt-4 text-sm text-emerald-700">{message}</p>}
+        <div className="mt-4 space-y-2">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-zinc-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-zinc-500">o continuar con</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 w-full border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50"
+            disabled={isGooglePending}
+            onClick={() => {
+              setGoogleError(null);
+              startGoogleTransition(async () => {
+                const result = await signInWithGoogle();
+                if (result.error) {
+                  setGoogleError(result.error);
+                  return;
+                }
+                if (result.redirectTo) {
+                  window.location.assign(result.redirectTo);
+                  return;
+                }
+                setGoogleError("No pudimos iniciar sesión con Google. Intenta nuevamente.");
+              });
+            }}
+          >
+            <LogIn className="size-4" />
+            {isGooglePending ? "Redirigiendo..." : "Continuar con Google"}
+          </Button>
+
+          {googleError && <p className="text-sm text-red-600">{googleError}</p>}
+        </div>
       </CardContent>
     </Card>
   );
