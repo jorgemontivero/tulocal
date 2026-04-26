@@ -22,6 +22,27 @@ const LocationPickerMap = dynamic(
 
 type LatLng = { lat: number; lng: number };
 
+type NominatimAddress = {
+  road?: string;
+  pedestrian?: string;
+  footway?: string;
+  path?: string;
+  cycleway?: string;
+  house_number?: string;
+};
+
+type NominatimReverseResponse = {
+  display_name?: string;
+  address?: NominatimAddress;
+};
+
+type NominatimSearchResponseItem = {
+  lat: string;
+  lon: string;
+  display_name: string;
+  address?: NominatimAddress;
+};
+
 export type LocationPickerProps = {
   latitude: string;
   longitude: string;
@@ -30,6 +51,24 @@ export type LocationPickerProps = {
   onLongitudeChange: (v: string) => void;
   onAddressChange: (v: string) => void;
 };
+
+function buildAddressLabel(
+  displayName: string | undefined,
+  address: NominatimAddress | undefined,
+): string {
+  const street =
+    address?.road ?? address?.pedestrian ?? address?.footway ?? address?.path ?? address?.cycleway;
+  const number = address?.house_number?.trim();
+  const normalizedStreet = street?.trim();
+
+  if (normalizedStreet && number) {
+    return `${normalizedStreet} ${number}`;
+  }
+  if (normalizedStreet) {
+    return normalizedStreet;
+  }
+  return String(displayName ?? "").trim();
+}
 
 export function LocationPicker({
   latitude,
@@ -63,13 +102,14 @@ export function LocationPicker({
       updatePosition(ll);
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${ll.lat}&lon=${ll.lng}&format=json&accept-language=es`,
+          `https://nominatim.openstreetmap.org/reverse?lat=${ll.lat}&lon=${ll.lng}&format=json&accept-language=es&addressdetails=1`,
           { headers: { "User-Agent": "tulocal.com.ar" } },
         );
         if (res.ok) {
-          const data = (await res.json()) as { display_name?: string };
-          if (data.display_name) {
-            onAddressChange(data.display_name);
+          const data = (await res.json()) as NominatimReverseResponse;
+          const nextAddress = buildAddressLabel(data.display_name, data.address);
+          if (nextAddress) {
+            onAddressChange(nextAddress);
           }
         }
       } catch {
@@ -95,12 +135,13 @@ export function LocationPicker({
 
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${ll.lat}&lon=${ll.lng}&format=json&accept-language=es`,
+            `https://nominatim.openstreetmap.org/reverse?lat=${ll.lat}&lon=${ll.lng}&format=json&accept-language=es&addressdetails=1`,
             { headers: { "User-Agent": "tulocal.com.ar" } },
           );
           if (res.ok) {
-            const data = (await res.json()) as { display_name?: string };
-            if (data.display_name) onAddressChange(data.display_name);
+            const data = (await res.json()) as NominatimReverseResponse;
+            const nextAddress = buildAddressLabel(data.display_name, data.address);
+            if (nextAddress) onAddressChange(nextAddress);
           }
         } catch {
           /* silent */
@@ -126,15 +167,11 @@ export function LocationPicker({
     setSearchLoading(true);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&accept-language=es`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&accept-language=es&addressdetails=1`,
         { headers: { "User-Agent": "tulocal.com.ar" } },
       );
       if (res.ok) {
-        const results = (await res.json()) as Array<{
-          lat: string;
-          lon: string;
-          display_name: string;
-        }>;
+        const results = (await res.json()) as NominatimSearchResponseItem[];
         if (results[0]) {
           const ll = {
             lat: Number.parseFloat(results[0].lat),
@@ -142,7 +179,8 @@ export function LocationPicker({
           };
           updatePosition(ll);
           setFlyTo({ ...ll });
-          onAddressChange(results[0].display_name);
+          const nextAddress = buildAddressLabel(results[0].display_name, results[0].address);
+          if (nextAddress) onAddressChange(nextAddress);
         }
       }
     } catch {

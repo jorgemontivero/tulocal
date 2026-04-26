@@ -9,18 +9,80 @@ import type { MapShop } from "@/components/shop-map";
 
 import "leaflet/dist/leaflet.css";
 
-const defaultIcon = L.icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const defaultIcon = L.divIcon({
+  className: "shop-default-marker",
+  html: `
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div style="
+        width: 26px;
+        height: 26px;
+        border-radius: 9999px;
+        background: radial-gradient(circle at 30% 30%, #34d399 0%, #10b981 55%, #047857 100%);
+        border: 2px solid #ffffff;
+        box-shadow: 0 6px 16px rgba(6, 95, 70, 0.45);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      ">
+        <div style="
+          width: 8px;
+          height: 8px;
+          border-radius: 9999px;
+          background: #ffffff;
+        "></div>
+      </div>
+      <div style="
+        margin-top: -1px;
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 10px solid #047857;
+        filter: drop-shadow(0 4px 4px rgba(6, 95, 70, 0.35));
+      "></div>
+    </div>
+  `,
+  iconSize: [26, 36],
+  iconAnchor: [13, 36],
+  popupAnchor: [0, -30],
 });
 
 L.Marker.prototype.options.icon = defaultIcon;
+
+function logoMarkerIcon(logoUrl: string): L.DivIcon {
+  const safeUrl = encodeURI(logoUrl);
+  return L.divIcon({
+    className: "shop-logo-marker",
+    html: `
+      <div style="
+        width: 42px;
+        height: 42px;
+        border-radius: 9999px;
+        overflow: hidden;
+        border: 2px solid #10b981;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+        background: white;
+      ">
+        <img
+          src="${safeUrl}"
+          alt=""
+          style="width:100%;height:100%;object-fit:cover;display:block;"
+        />
+      </div>
+    `,
+    iconSize: [42, 42],
+    iconAnchor: [21, 42],
+    popupAnchor: [0, -36],
+  });
+}
+
+function shouldUseLogoMarker(shop: MapShop): boolean {
+  return (
+    (shop.plan_type === "oro" || shop.plan_type === "black") &&
+    typeof shop.logo_url === "string" &&
+    shop.logo_url.trim() !== ""
+  );
+}
 
 function FitBounds({ shops }: { shops: MapShop[] }) {
   const map = useMap();
@@ -62,7 +124,11 @@ export default function LeafletMap({ shops, center, zoom }: LeafletMapProps) {
       <FitBounds shops={shops} />
 
       {shops.map((shop) => (
-        <Marker key={shop.id} position={[shop.latitude, shop.longitude]}>
+        <Marker
+          key={shop.id}
+          position={[shop.latitude, shop.longitude]}
+          icon={shouldUseLogoMarker(shop) ? logoMarkerIcon(shop.logo_url!) : defaultIcon}
+        >
           <Popup minWidth={200} maxWidth={260}>
             <div className="flex items-start gap-3 py-1">
               <Avatar className="size-10 shrink-0 ring-1 ring-zinc-200">

@@ -24,10 +24,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { createShop } from "@/app/dashboard/actions";
 import type { ShopTaxonomyCategory, ShopTaxonomySubcategory } from "@/lib/shop-taxonomy";
 import { cn } from "@/lib/utils";
+import {
+  isShopDescriptionLengthValid,
+  normalizeShopDescription,
+  shopDescriptionTextLength,
+  SHOP_DESCRIPTION_MAX_TEXT,
+  SHOP_DESCRIPTION_MIN_TEXT,
+} from "@/lib/shop-description";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { canShopPlanUseFlyers, getShopFlyerLimitByPlan } from "@/lib/shop-flyers";
 
 /** Compat: antes se exportaban estos alias desde este módulo. */
 export type TaxonomyCategory = ShopTaxonomyCategory;
@@ -49,25 +57,25 @@ const schema = z.object({
   instagram: z.string().max(100, "Instagram: maximo 100 caracteres."),
   description: z
     .string()
-    .min(10, "La descripcion debe tener al menos 10 caracteres.")
-    .max(220, "La descripcion no puede superar 220 caracteres."),
+    .transform((value) => normalizeShopDescription(value))
+    .refine((value) => isShopDescriptionLengthValid(value), {
+      message: `La descripcion debe tener entre ${SHOP_DESCRIPTION_MIN_TEXT} y ${SHOP_DESCRIPTION_MAX_TEXT} caracteres de texto.`,
+    }),
 });
 
 type FormValues = z.infer<typeof schema>;
 
 const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024;
-const MAX_SHOP_FLYERS = 3;
 const MAX_SHOP_FLYER_BYTES = 5 * 1024 * 1024;
-const FLYER_SLOTS = [0, 1, 2] as const;
 
 type FlyerSlot =
   | { kind: "empty" }
   | { kind: "url"; url: string }
   | { kind: "file"; file: File };
 
-function buildInitialFlyerSlots(urls: string[] | undefined): FlyerSlot[] {
-  const list = [...(urls ?? [])].slice(0, MAX_SHOP_FLYERS);
-  return FLYER_SLOTS.map((i) =>
+function buildInitialFlyerSlots(urls: string[] | undefined, maxFlyers: number): FlyerSlot[] {
+  const list = [...(urls ?? [])].slice(0, maxFlyers);
+  return Array.from({ length: maxFlyers }, (_, i) =>
     list[i] ? { kind: "url" as const, url: list[i] } : { kind: "empty" as const },
   );
 }
@@ -134,11 +142,12 @@ export function NewShopForm({
   const [flyerError, setFlyerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
+  const maxFlyersForPlan = getShopFlyerLimitByPlan(initialPlanType);
+  const canUploadFlyers = canShopPlanUseFlyers(initialPlanType);
   const [flyerSlots, setFlyerSlots] = useState<FlyerSlot[]>(() =>
-    buildInitialFlyerSlots(initialFlyerUrls),
+    buildInitialFlyerSlots(initialFlyerUrls, maxFlyersForPlan),
   );
   const flyerInputRefs = useRef<Array<HTMLInputElement | null>>([]);
-  const canUploadFlyers = initialPlanType === "oro" || initialPlanType === "black";
 
   /** Cálculo síncrono antes de useForm: instante cero con el tipo correcto para el filtro de categorías. */
   const resolvedBusinessType = resolveInitialBusinessType(
@@ -188,8 +197,8 @@ export function NewShopForm({
       .filter((s): s is Extract<FlyerSlot, { kind: "file" }> => s.kind === "file")
       .map((s) => s.file);
 
-    if (filesInSlots.length > MAX_SHOP_FLYERS) {
-      setFlyerError("Puedes subir hasta 3 flyers.");
+    if (filesInSlots.length > maxFlyersForPlan) {
+      setFlyerError(`Puedes subir hasta ${maxFlyersForPlan} flyer${maxFlyersForPlan === 1 ? "" : "s"}.`);
       return;
     }
 
@@ -219,7 +228,7 @@ export function NewShopForm({
       if (selectedLogo) formData.set("logo", selectedLogo);
       if (canUploadFlyers) {
         formData.set("flyer_edit", "1");
-        for (let i = 0; i < MAX_SHOP_FLYERS; i++) {
+        for (let i = 0; i < maxFlyersForPlan; i++) {
           const slot = flyerSlots[i]!;
           if (slot.kind === "file") {
             formData.set(`flyer_slot_${i}`, slot.file);
@@ -456,11 +465,22 @@ export function NewShopForm({
 
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-slate-900">Descripcion breve</label>
-            <Textarea
-              placeholder="Conta en una oracion que ofreces."
-              rows={4}
-              {...form.register("description")}
+            <Controller
+              name="description"
+              control={form.control}
+              render={({ field }) => (
+                <MarkdownEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  rows={5}
+                  placeholder="Conta que ofreces. Puedes usar formato."
+                />
+              )}
             />
+            <p className="text-xs text-zinc-500">
+              {shopDescriptionTextLength(form.watch("description"))}/{SHOP_DESCRIPTION_MAX_TEXT}{" "}
+              caracteres de texto.
+            </p>
             {form.formState.errors.description && (
               <p className="text-xs text-red-600">
                 {form.formState.errors.description.message}
@@ -500,14 +520,14 @@ export function NewShopForm({
           {canUploadFlyers && (
             <div className="space-y-1.5 rounded-lg border border-amber-200 bg-amber-50/60 p-3">
               <label className="text-sm font-semibold text-slate-900">
-                Flyers promocionales (hasta 3)
+                Flyers promocionales (hasta {maxFlyersForPlan})
               </label>
               <p className="text-xs text-slate-700">
                 Recomendado: vertical 4:5 (como post de Instagram), por ejemplo 1080×1350 px. En
                 celular se lee mejor que un flyer muy ancho (2:1).
               </p>
               <div className="grid gap-2 sm:grid-cols-3">
-                {FLYER_SLOTS.map((slot) => {
+                {flyerSlots.map((_, slot) => {
                   const state = flyerSlots[slot]!;
                   return (
                     <div

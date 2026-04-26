@@ -17,6 +17,9 @@ import { LISTINGS_PAGE_SIZE } from "@/lib/constants";
 import { SiteFooter } from "@/components/site-footer";
 import { parseListingImageUrls } from "@/lib/listing-display";
 import { ShopFlyersCarousel } from "@/components/shop-flyers-carousel";
+import { ShopDescription } from "@/components/shop-description";
+import { markdownToPlainText } from "@/lib/shop-description";
+import { getShopFlyerLimitByPlan } from "@/lib/shop-flyers";
 
 const SITE_URL = "https://tulocal.com.ar";
 
@@ -35,10 +38,11 @@ function shortMetaDescription(
 ): string {
   const parts: string[] = [];
   if (description) {
+    const plainDescription = markdownToPlainText(description);
     const excerpt =
-      description.length > 120
-        ? `${description.slice(0, 120).trim()}…`
-        : description;
+      plainDescription.length > 120
+        ? `${plainDescription.slice(0, 120).trim()}…`
+        : plainDescription;
     parts.push(excerpt);
   }
   if (address) parts.push(`Dirección: ${address}.`);
@@ -184,7 +188,7 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
 
   const { data: shop } = await supabase
     .from("shops")
-    .select("id,name,category,description,logo_url,flyer_urls,whatsapp_number,instagram_username,address,latitude,longitude")
+    .select("id,name,category,description,logo_url,flyer_urls,plan_type,whatsapp_number,instagram_username,address,latitude,longitude")
     .eq("slug", slug)
     .eq("status", "approved")
     .maybeSingle();
@@ -205,9 +209,12 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
   const embedMapUrl = hasCoordinates
     ? `https://maps.google.com/maps?q=${shop.latitude},${shop.longitude}&z=16&output=embed`
     : null;
+  const maxFlyersForPlan = getShopFlyerLimitByPlan(
+    (shop as { plan_type?: string | null }).plan_type,
+  );
   const flyerUrls = parseListingImageUrls(
     (shop as { flyer_urls?: unknown }).flyer_urls,
-  ).slice(0, 3);
+  ).slice(0, maxFlyersForPlan);
 
   const { data: listingsRaw } = await supabase
     .from("listings")
@@ -235,7 +242,7 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
   const jsonLd = buildLocalBusinessJsonLd({
     name: shop.name,
     slug,
-    description: shop.description,
+    description: shop.description ? markdownToPlainText(shop.description) : null,
     category: shop.category as string | null,
     logo_url: shop.logo_url,
     address: shop.address as string | null,
@@ -266,8 +273,14 @@ export default async function ShopCatalogPage({ params }: ShopPageProps) {
               <div className="min-w-0 text-center sm:text-left">
                 <CardTitle className="text-2xl text-slate-900 dark:text-zinc-100 sm:text-3xl">{shop.name}</CardTitle>
                 <CardDescription className="mt-1 text-base text-slate-700 dark:text-zinc-300">
-                  {shop.category ?? "Comercio local"} {shop.description ? `· ${shop.description}` : ""}
+                  {shop.category ?? "Comercio local"}
                 </CardDescription>
+                {shop.description ? (
+                  <ShopDescription
+                    markdown={shop.description}
+                    className="mt-2 text-left text-slate-800 dark:text-zinc-200"
+                  />
+                ) : null}
               </div>
             </div>
 

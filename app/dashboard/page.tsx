@@ -16,6 +16,8 @@ import { signOut } from "@/app/auth/actions";
 import { createClient } from "@/utils/supabase/server";
 import { PLAN_LABELS } from "@/lib/admin";
 import { parseListingImageUrls } from "@/lib/listing-display";
+import { ShopDescription } from "@/components/shop-description";
+import { canShopPlanUseFlyers, getShopFlyerLimitByPlan } from "@/lib/shop-flyers";
 
 const brandSans = Poppins({
   subsets: ["latin"],
@@ -192,9 +194,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     : hasMapCoords
       ? "Ubicación en mapa (sin dirección escrita)"
       : "Sin ubicación en el mapa";
-  const flyersPremium =
-    shopRow.plan_type === "oro" || shopRow.plan_type === "black";
-  const flyerCount = flyersPremium ? parseListingImageUrls(shopRow.flyer_urls).length : 0;
+  const maxFlyersForPlan = getShopFlyerLimitByPlan(shopRow.plan_type);
+  const canUseFlyers = canShopPlanUseFlyers(shopRow.plan_type);
+  const flyerCount = canUseFlyers ? parseListingImageUrls(shopRow.flyer_urls).length : 0;
   const { data: listings } = await supabase
     .from("listings")
     .select("id,title,description,price,discount_percentage,is_promoted,image_urls,status")
@@ -308,16 +310,25 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </p>
 
               <p className="text-sm text-slate-700 dark:text-zinc-300">Descripción</p>
-              <p className="line-clamp-4 whitespace-pre-wrap text-sm leading-relaxed text-slate-900 dark:text-zinc-100">
-                {shopRow.description?.trim() || "Sin descripción"}
-              </p>
+              {shopRow.description?.trim() ? (
+                <ShopDescription
+                  markdown={shopRow.description}
+                  className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-slate-900 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-100"
+                />
+              ) : (
+                <p className="text-sm text-slate-900 dark:text-zinc-100">Sin descripción</p>
+              )}
 
               <p className="text-sm text-slate-700 dark:text-zinc-300">Ubicación</p>
-              <p className="text-sm leading-snug text-slate-900 dark:text-zinc-100">{ubicacionResumen}</p>
+              <p className="text-sm font-semibold leading-snug text-slate-900 dark:text-zinc-100">
+                {ubicacionResumen}
+              </p>
 
-              {flyersPremium && (
+              {canUseFlyers && (
                 <>
-                  <p className="text-sm text-slate-700 dark:text-zinc-300">Flyers en el catálogo</p>
+                  <p className="text-sm text-slate-700 dark:text-zinc-300">
+                    Flyers en el catálogo (máx. {maxFlyersForPlan})
+                  </p>
                   <p className="font-semibold text-slate-900 dark:text-zinc-100">
                     {flyerCount === 0
                       ? "Ninguno cargado"

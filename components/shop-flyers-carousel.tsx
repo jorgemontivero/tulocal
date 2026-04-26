@@ -32,13 +32,11 @@ export function ShopFlyersCarousel({ flyers }: { flyers: string[] }) {
   const visible = useVisibleSlides();
   const viewportRef = useRef<HTMLDivElement>(null);
   const [viewportW, setViewportW] = useState(0);
-  const [index, setIndex] = useState(0);
-
-  const effectiveVisible = Math.max(1, Math.min(visible, flyers.length));
+  const [page, setPage] = useState(0);
 
   const slideW =
     viewportW > 0
-      ? (viewportW - GAP_PX * (effectiveVisible - 1)) / effectiveVisible
+      ? (viewportW - GAP_PX * (visible - 1)) / visible
       : 0;
 
   useLayoutEffect(() => {
@@ -51,39 +49,33 @@ export function ShopFlyersCarousel({ flyers }: { flyers: string[] }) {
     return () => ro.disconnect();
   }, [visible, flyers.length]);
 
-  const maxIndex = Math.max(0, flyers.length - effectiveVisible);
-  const pageCount = maxIndex + 1;
-  const canNavigate = maxIndex > 0;
-  const pageIndex = Math.min(index, maxIndex);
+  const pageSize = visible;
+  const pageCount = Math.ceil(flyers.length / pageSize);
+  const canNavigate = pageCount > 1;
+  const pageIndex = Math.min(page, Math.max(0, pageCount - 1));
+  const pages = Array.from({ length: pageCount }, (_, i) =>
+    flyers.slice(i * pageSize, i * pageSize + pageSize),
+  );
 
   useEffect(() => {
     if (!canNavigate) return;
     const id = window.setInterval(() => {
-      setIndex((i) => {
-        const c = Math.min(i, maxIndex);
-        return c >= maxIndex ? 0 : c + 1;
-      });
+      setPage((current) => (current + 1) % pageCount);
     }, SLIDE_MS);
     return () => window.clearInterval(id);
-  }, [canNavigate, maxIndex]);
+  }, [canNavigate, pageCount]);
 
   const showPrev = useCallback(() => {
-    setIndex((current) => {
-      const c = Math.min(current, maxIndex);
-      return (c - 1 + pageCount) % pageCount;
-    });
-  }, [maxIndex, pageCount]);
+    setPage((current) => (current - 1 + pageCount) % pageCount);
+  }, [pageCount]);
 
   const showNext = useCallback(() => {
-    setIndex((current) => {
-      const c = Math.min(current, maxIndex);
-      return (c + 1) % pageCount;
-    });
-  }, [maxIndex, pageCount]);
+    setPage((current) => (current + 1) % pageCount);
+  }, [pageCount]);
 
   if (flyers.length === 0) return null;
 
-  const translatePx = pageIndex * (slideW + GAP_PX);
+  const translatePx = pageIndex * viewportW;
 
   return (
     <div
@@ -96,20 +88,31 @@ export function ShopFlyersCarousel({ flyers }: { flyers: string[] }) {
           transform: slideW > 0 ? `translateX(-${translatePx}px)` : undefined,
         }}
       >
-        {flyers.map((src, i) => (
+        {pages.map((group, groupIdx) => (
           <div
-            key={`${src}-${i}`}
-            className="relative aspect-[4/5] shrink-0 overflow-hidden bg-muted"
-            style={{ width: slideW > 0 ? slideW : "100%" }}
+            key={`group-${groupIdx}`}
+            className="flex shrink-0 items-stretch justify-center gap-2"
+            style={{ width: viewportW > 0 ? viewportW : "100%" }}
           >
-            <Image
-              src={src}
-              alt={`Flyer ${i + 1}`}
-              fill
-              sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
-              className="h-full w-full object-contain"
-              loading={i === 0 ? "eager" : "lazy"}
-            />
+            {group.map((src, itemIdx) => {
+              const absoluteIdx = groupIdx * pageSize + itemIdx;
+              return (
+                <div
+                  key={`${src}-${absoluteIdx}`}
+                  className="relative aspect-[4/5] shrink-0 overflow-hidden bg-muted"
+                  style={{ width: slideW > 0 ? slideW : "100%" }}
+                >
+                  <Image
+                    src={src}
+                    alt={`Flyer ${absoluteIdx + 1}`}
+                    fill
+                    sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
+                    className="h-full w-full object-contain"
+                    loading={absoluteIdx === 0 ? "eager" : "lazy"}
+                  />
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
@@ -147,7 +150,7 @@ export function ShopFlyersCarousel({ flyers }: { flyers: string[] }) {
               type="button"
               aria-label={`Ver grupo de flyers ${i + 1}`}
               aria-current={i === pageIndex}
-              onClick={() => setIndex(i)}
+              onClick={() => setPage(i)}
               className={cn(
                 "h-2.5 rounded-full transition-all",
                 i === pageIndex ? "w-7 bg-white" : "w-2.5 bg-white/60 hover:bg-white/85",

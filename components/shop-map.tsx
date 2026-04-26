@@ -15,6 +15,7 @@ export type MapShop = {
   name: string;
   slug: string;
   logo_url: string | null;
+  plan_type: string | null;
   category_id: string | null;
   subcategory_id: string | null;
   address: string | null;

@@ -4,6 +4,13 @@ import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { parseListingImageUrls } from "@/lib/listing-display";
 import { sendMerchantWelcome } from "@/lib/mail-service";
+import { canShopPlanUseFlyers, getShopFlyerLimitByPlan } from "@/lib/shop-flyers";
+import {
+  isShopDescriptionLengthValid,
+  normalizeShopDescription,
+  SHOP_DESCRIPTION_MAX_TEXT,
+  SHOP_DESCRIPTION_MIN_TEXT,
+} from "@/lib/shop-description";
 
 const newShopSchema = z.object({
   name: z.string().min(2, "Ingresa un nombre valido."),
@@ -16,8 +23,10 @@ const newShopSchema = z.object({
   instagram: z.string().max(100, "Instagram: maximo 100 caracteres."),
   description: z
     .string()
-    .min(10, "La descripcion debe tener al menos 10 caracteres.")
-    .max(220, "La descripcion no puede superar 220 caracteres."),
+    .transform((value) => normalizeShopDescription(value))
+    .refine((value) => isShopDescriptionLengthValid(value), {
+      message: `La descripcion debe tener entre ${SHOP_DESCRIPTION_MIN_TEXT} y ${SHOP_DESCRIPTION_MAX_TEXT} caracteres de texto.`,
+    }),
 });
 
 export type CreateShopResult = {
@@ -29,7 +38,6 @@ export type ListingActionResult = {
   error?: string;
 };
 
-const MAX_SHOP_FLYERS = 3;
 const MAX_SHOP_FLYER_BYTES = 5 * 1024 * 1024;
 
 function slugify(input: string): string {
@@ -258,8 +266,8 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     logoUrl = publicData.publicUrl;
   }
 
-  const allowsFlyers =
-    existingShop?.plan_type === "oro" || existingShop?.plan_type === "black";
+  const maxFlyersForPlan = getShopFlyerLimitByPlan(existingShop?.plan_type);
+  const allowsFlyers = canShopPlanUseFlyers(existingShop?.plan_type);
 
   const existingFlyerUrls = parseListingImageUrls(existingShop?.flyer_urls);
 
@@ -268,7 +276,7 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
 
   if (allowsFlyers && flyerEdit) {
     const finalFlyers: string[] = [];
-    for (let i = 0; i < MAX_SHOP_FLYERS; i++) {
+    for (let i = 0; i < maxFlyersForPlan; i++) {
       const file = formData.get(`flyer_slot_${i}`);
       if (file instanceof File && file.size > 0) {
         if (!file.type.startsWith("image/")) {
@@ -298,7 +306,7 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     const flyerFiles = formData
       .getAll("flyers")
       .filter((f): f is File => f instanceof File && f.size > 0)
-      .slice(0, MAX_SHOP_FLYERS);
+      .slice(0, maxFlyersForPlan);
 
     for (const file of flyerFiles) {
       if (!file.type.startsWith("image/")) {
@@ -313,7 +321,8 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
       if (!allowsFlyers) {
         return {
           ok: false,
-          error: "Los flyers promocionales estan disponibles solo para plan Oro.",
+          error:
+            "Los flyers promocionales estan disponibles en planes Plata, Oro y Black.",
         };
       }
       const uploadedFlyers = await uploadShopFlyerFiles(supabase, user.id, flyerFiles);

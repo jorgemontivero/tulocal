@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { markdownToPlainText } from "@/lib/shop-description";
 export type ShopCardShop = {
   id: string;
   name: string;
@@ -23,8 +24,9 @@ export type ShopCardShop = {
 };
 
 function shortDescription(description: string | null): string {
-  if (!description) return "Comercio local de Catamarca.";
-  return description.length > 110 ? `${description.slice(0, 110)}...` : description;
+  const plain = markdownToPlainText(description ?? "");
+  if (!plain) return "Comercio local de Catamarca.";
+  return plain.length > 110 ? `${plain.slice(0, 110)}...` : plain;
 }
 
 function rubroFromSlug(slug: string): string {

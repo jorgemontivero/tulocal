@@ -23,7 +23,9 @@ export default async function MapaPage() {
   const [shopsRes, categoriesRes, subcategoriesRes] = await Promise.all([
     supabase
       .from("shops")
-      .select("id,name,slug,logo_url,category_id,subcategory_id,address,latitude,longitude")
+      .select("id,name,slug,logo_url,plan_type,category_id,subcategory_id,address,latitude,longitude")
+      .eq("status", "approved")
+      .in("plan_type", ["plata", "oro", "black"])
       .not("latitude", "is", null)
       .not("longitude", "is", null)
       .order("name"),
@@ -43,6 +45,7 @@ export default async function MapaPage() {
       name: s.name,
       slug: s.slug,
       logo_url: s.logo_url,
+      plan_type: s.plan_type,
       category_id: s.category_id,
       subcategory_id: s.subcategory_id,
       address: s.address,

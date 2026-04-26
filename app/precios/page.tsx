@@ -86,6 +86,10 @@ const PLANS: Plan[] = [
       { text: "Hasta 20 productos publicados", icon: Package },
       { text: "Prioridad en resultados de búsqueda", icon: Zap },
       { text: "Ubicación en el mapa interactivo", icon: MapPin },
+      {
+        text: "Flyer promocional en el catálogo público de tu local (hasta 1)",
+        icon: Images,
+      },
       { text: "Soporte directo por WhatsApp", icon: MessageCircle },
     ],
     cta: "Contratar Plata",

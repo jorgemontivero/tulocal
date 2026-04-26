@@ -17,11 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const CONTACT_METHOD_OPTIONS = [
-  { value: "whatsapp", label: "WhatsApp" },
-  { value: "email", label: "Email" },
-] as const;
-
 const AGE_RANGE_OPTIONS = [
   { value: "18-24", label: "18 – 24 años" },
   { value: "25-34", label: "25 – 34 años" },
@@ -56,8 +51,6 @@ export function PromoForm({ source, onSuccess }: PromoFormProps) {
       gender: "",
     },
   });
-
-  const contactMethod = form.watch("contact_method");
 
   const onSubmit = form.handleSubmit(async (values) => {
     setServerError(null);
@@ -106,74 +99,29 @@ export function PromoForm({ source, onSuccess }: PromoFormProps) {
         )}
       </div>
 
-      {/* Fila 2: Método + valor de contacto */}
-      <div className="flex gap-2">
-        <div className="space-y-1 w-36 shrink-0">
-          <label
-            htmlFor="lead-contact-method"
-            className="text-sm font-semibold text-slate-900"
-          >
-            Contacto <span className="text-red-500">*</span>
-          </label>
-          <Controller
-            control={form.control}
-            name="contact_method"
-            render={({ field }) => (
-              <Select
-                value={field.value}
-                onValueChange={field.onChange}
-              >
-                <SelectTrigger
-                  id="lead-contact-method"
-                  className="w-full h-8"
-                  aria-invalid={!!form.formState.errors.contact_method}
-                >
-                  <SelectValue placeholder="Método" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CONTACT_METHOD_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-          {form.formState.errors.contact_method && (
-            <p className="text-xs text-red-600">
-              {form.formState.errors.contact_method.message}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-1 flex-1">
-          <label
-            htmlFor="lead-contact-value"
-            className="text-sm font-semibold text-slate-900 invisible select-none"
-            aria-hidden
-          >
-            Valor
-          </label>
-          <Input
-            id="lead-contact-value"
-            type={contactMethod === "email" ? "email" : "tel"}
-            inputMode={contactMethod === "email" ? "email" : "tel"}
-            autoComplete={contactMethod === "email" ? "email" : "tel"}
-            placeholder={
-              contactMethod === "email"
-                ? "tu@email.com"
-                : "Ej: 3834 123456"
-            }
-            aria-invalid={!!form.formState.errors.contact_value}
-            {...form.register("contact_value")}
-          />
-          {form.formState.errors.contact_value && (
-            <p className="text-xs text-red-600">
-              {form.formState.errors.contact_value.message}
-            </p>
-          )}
-        </div>
+      {/* Fila 2: WhatsApp */}
+      <div className="space-y-1">
+        <input type="hidden" {...form.register("contact_method")} value="whatsapp" />
+        <label
+          htmlFor="lead-contact-value"
+          className="text-sm font-semibold text-slate-900"
+        >
+          WhatsApp <span className="text-red-500">*</span>
+        </label>
+        <Input
+          id="lead-contact-value"
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          placeholder="Ej: 3834 123456"
+          aria-invalid={!!form.formState.errors.contact_value}
+          {...form.register("contact_value")}
+        />
+        {form.formState.errors.contact_value && (
+          <p className="text-xs text-red-600">
+            {form.formState.errors.contact_value.message}
+          </p>
+        )}
       </div>
 
       {/* Fila 3: Edad + Género (secundarios) */}
