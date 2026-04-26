@@ -179,6 +179,7 @@ export function LoginTabsCard() {
   const searchParams = useSearchParams();
   const [message, setMessage] = useState<string | null>(null);
   const passwordUpdated = searchParams.get("password") === "updated";
+  const verificationFailed = searchParams.get("error") === "VerificationFailed";
 
   return (
     <Card className="w-full border border-zinc-200 bg-white shadow-sm">
@@ -204,7 +205,18 @@ export function LoginTabsCard() {
         <CardDescription className="text-center text-slate-700">
           Accede a tu cuenta o registrate para publicar tu local.
         </CardDescription>
-        {passwordUpdated ? (
+        {verificationFailed ? (
+          <div
+            role="alert"
+            className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"
+          >
+            <p className="font-semibold">No pudimos verificar tu correo.</p>
+            <p className="mt-1 text-red-800">
+              El enlace de verificación es inválido o ha expirado. Por favor, intenta iniciar
+              sesión o regístrate de nuevo para recibir un nuevo enlace.
+            </p>
+          </div>
+        ) : passwordUpdated ? (
           <div
             role="status"
             className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"

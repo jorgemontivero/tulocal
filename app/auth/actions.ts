@@ -11,6 +11,7 @@ import {
 export type AuthActionState = {
   error?: string;
   success?: string;
+  requiresEmailConfirmation?: boolean;
 };
 
 export async function signIn(input: unknown): Promise<AuthActionState> {
@@ -38,7 +39,7 @@ export async function signUp(input: unknown): Promise<AuthActionState> {
   const { nombre, apellido, celular, email, password } = parsed.data;
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -54,9 +55,17 @@ export async function signUp(input: unknown): Promise<AuthActionState> {
     return { error: "No pudimos registrar tu cuenta. Proba nuevamente." };
   }
 
+  const needsEmailConfirmation = Boolean(data.user) && !data.session;
+  if (needsEmailConfirmation) {
+    return {
+      success:
+        "¡Registro exitoso! Por favor, revisa tu bandeja de entrada (y la carpeta de Spam) para confirmar tu correo y activar tu cuenta.",
+      requiresEmailConfirmation: true,
+    };
+  }
+
   return {
-    success:
-      "Te registraste con exito. Revisa tu email para confirmar la cuenta y luego inicia sesion.",
+    success: "Te registraste con exito. Ya puedes iniciar sesion.",
   };
 }
 
