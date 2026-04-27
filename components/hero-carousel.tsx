@@ -7,26 +7,11 @@ import { cn } from "@/lib/utils";
 const SLIDE_MS = 5000;
 
 const SLIDES = [
-  {
-    src: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80&auto=format&fit=crop",
-    alt: "Paisaje y sierras de la región",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&q=80&auto=format&fit=crop",
-    alt: "Gastronomía regional y platos típicos",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80&auto=format&fit=crop",
-    alt: "Comercio local y vidrieras de negocios",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&q=80&auto=format&fit=crop",
-    alt: "Herramientas y servicios para el hogar",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=1200&q=80&auto=format&fit=crop",
-    alt: "Café y encuentros en espacios de barrio",
-  },
+  { src: "/hero/slide-1.jpg", alt: "Paisaje y sierras de la región" },
+  { src: "/hero/slide-2.jpg", alt: "Gastronomía regional y platos típicos" },
+  { src: "/hero/slide-3.jpg", alt: "Comercio local y vidrieras de negocios" },
+  { src: "/hero/slide-4.jpg", alt: "Herramientas y servicios para el hogar" },
+  { src: "/hero/slide-5.jpg", alt: "Café y encuentros en espacios de barrio" },
 ] as const;
 
 export function HeroCarousel() {
