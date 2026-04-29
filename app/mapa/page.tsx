@@ -25,7 +25,7 @@ export default async function MapaPage() {
       .from("shops")
       .select("id,name,slug,logo_url,plan_type,category_id,subcategory_id,address,latitude,longitude")
       .eq("status", "approved")
-      .in("plan_type", ["plata", "oro", "black"])
+      .in("plan_type", ["bronce", "plata", "oro", "black"])
       .not("latitude", "is", null)
       .not("longitude", "is", null)
       .order("name"),

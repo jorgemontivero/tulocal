@@ -5,7 +5,7 @@ import Link from "next/link";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { MapShop } from "@/components/shop-map";
+import type { BasemapKey, MapShop } from "@/components/shop-map";
 
 import "leaflet/dist/leaflet.css";
 
@@ -47,6 +47,23 @@ const defaultIcon = L.divIcon({
   popupAnchor: [0, -30],
 });
 
+const bronzeIcon = L.divIcon({
+  className: "shop-bronze-marker",
+  html: `
+    <div style="
+      width: 18px;
+      height: 18px;
+      border-radius: 9999px;
+      background: #10b981;
+      border: 2px solid #ffffff;
+      box-shadow: 0 3px 10px rgba(6, 95, 70, 0.35);
+    "></div>
+  `,
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+  popupAnchor: [0, -10],
+});
+
 L.Marker.prototype.options.icon = defaultIcon;
 
 function logoMarkerIcon(logoUrl: string): L.DivIcon {
@@ -84,6 +101,12 @@ function shouldUseLogoMarker(shop: MapShop): boolean {
   );
 }
 
+function markerForShop(shop: MapShop): L.DivIcon {
+  if (shouldUseLogoMarker(shop)) return logoMarkerIcon(shop.logo_url!);
+  if (shop.plan_type === "bronce") return bronzeIcon;
+  return defaultIcon;
+}
+
 function FitBounds({ shops }: { shops: MapShop[] }) {
   const map = useMap();
 
@@ -106,9 +129,48 @@ type LeafletMapProps = {
   shops: MapShop[];
   center: [number, number];
   zoom: number;
+  basemap: BasemapKey;
 };
 
-export default function LeafletMap({ shops, center, zoom }: LeafletMapProps) {
+const BASEMAPS: Record<
+  BasemapKey,
+  {
+    attribution: string;
+    url: string;
+    maxZoom?: number;
+    minZoom?: number;
+    subdomains?: string;
+  }
+> = {
+  osm: {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    maxZoom: 19,
+  },
+  dark: {
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png",
+    maxZoom: 20,
+    subdomains: "abcd",
+  },
+  satellite: {
+    attribution: "Tiles &copy; Esri",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    maxZoom: 19,
+  },
+  ign: {
+    attribution:
+      '&copy; <a href="https://www.ign.gob.ar/">Instituto Geográfico Nacional</a> + <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    url: "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png",
+    minZoom: 3,
+    maxZoom: 18,
+  },
+};
+
+export default function LeafletMap({ shops, center, zoom, basemap }: LeafletMapProps) {
+  const activeBasemap = BASEMAPS[basemap];
+
   return (
     <MapContainer
       center={center}
@@ -117,8 +179,11 @@ export default function LeafletMap({ shops, center, zoom }: LeafletMapProps) {
       className="z-0 h-[500px] w-full rounded-2xl border border-zinc-200 shadow-sm sm:h-[600px]"
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution={activeBasemap.attribution}
+        url={activeBasemap.url}
+        minZoom={activeBasemap.minZoom}
+        maxZoom={activeBasemap.maxZoom}
+        {...(activeBasemap.subdomains ? { subdomains: activeBasemap.subdomains } : {})}
       />
 
       <FitBounds shops={shops} />
@@ -127,7 +192,7 @@ export default function LeafletMap({ shops, center, zoom }: LeafletMapProps) {
         <Marker
           key={shop.id}
           position={[shop.latitude, shop.longitude]}
-          icon={shouldUseLogoMarker(shop) ? logoMarkerIcon(shop.logo_url!) : defaultIcon}
+          icon={markerForShop(shop)}
         >
           <Popup minWidth={200} maxWidth={260}>
             <div className="flex items-start gap-3 py-1">

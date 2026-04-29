@@ -34,6 +34,8 @@ export type MapSubcategory = {
   category_id: string;
 };
 
+export type BasemapKey = "osm" | "dark" | "satellite" | "ign";
+
 type ShopMapProps = {
   shops: MapShop[];
   categories: MapCategory[];
@@ -55,6 +57,7 @@ const LeafletMap = dynamic(() => import("@/components/leaflet-map"), {
 export function ShopMap({ shops, categories, subcategories }: ShopMapProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSubcategory, setSelectedSubcategory] = useState("all");
+  const [selectedBasemap, setSelectedBasemap] = useState<BasemapKey>("osm");
 
   const subcategoriesForCategory = useMemo(
     () =>
@@ -96,6 +99,23 @@ export function ShopMap({ shops, categories, subcategories }: ShopMapProps) {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="w-full sm:w-56">
+            <Select
+              value={selectedBasemap}
+              onValueChange={(v) => setSelectedBasemap(v as BasemapKey)}
+            >
+              <SelectTrigger className="border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="osm">OpenStreetMap</SelectItem>
+                <SelectItem value="dark">Vista oscura</SelectItem>
+                <SelectItem value="satellite">Satelital</SelectItem>
+                <SelectItem value="ign">IGN Argentina</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="w-full sm:w-56">
             <Select value={selectedCategory} onValueChange={handleCategoryChange}>
               <SelectTrigger className="border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
@@ -144,6 +164,7 @@ export function ShopMap({ shops, categories, subcategories }: ShopMapProps) {
         shops={filteredShops}
         center={CATAMARCA_CENTER}
         zoom={DEFAULT_ZOOM}
+        basemap={selectedBasemap}
       />
     </div>
   );
