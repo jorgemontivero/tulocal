@@ -159,7 +159,7 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
                   render={<Link href="/login" />}
                   className="border border-white/20 bg-white px-4 text-emerald-800 shadow-sm hover:bg-emerald-50 dark:border-emerald-300/30 dark:bg-emerald-200 dark:text-emerald-950 dark:hover:bg-emerald-100"
                 >
-                  Acceso Vendedores
+                  Ingresar
                 </Button>
               )}
             </div>
@@ -278,7 +278,7 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
                   render={<Link href="/login" onClick={closeDrawer} />}
                   className="w-full justify-center border border-white/20 bg-white text-emerald-800 shadow-sm hover:bg-emerald-50 dark:border-emerald-300/30 dark:bg-emerald-200 dark:text-emerald-950 dark:hover:bg-emerald-100"
                 >
-                  Acceso Vendedores
+                  Ingresar
                 </Button>
               )}
             </div>

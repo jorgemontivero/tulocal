@@ -142,10 +142,7 @@ export function SiteFooter() {
               Contacto
             </Link>
           </nav>
-          <div className="flex justify-center sm:flex-1">
-            <PromoFooterModal />
-          </div>
-          <p className="text-white/90">Potenciando el comercio local</p>
+<p className="text-white/90">Potenciando el comercio local</p>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4 text-xs text-white/60">

@@ -5,7 +5,6 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CookieBanner } from "@/components/cookie-banner";
 import { SiteHeaderWrapper } from "@/components/site-header-wrapper";
-import { PromoPopup } from "@/components/promo-popup";
 import { ThemeProvider } from "@/components/theme-provider";
 import { THEME_KEY } from "@/lib/theme-constants";
 import { themeFromCookieValue } from "@/lib/theme-cookie";
@@ -122,7 +121,6 @@ export default async function RootLayout({
           <Analytics />
           <SpeedInsights />
           <CookieBanner />
-          <PromoPopup />
           <PwaRegistry />
         </ThemeProvider>
       </body>

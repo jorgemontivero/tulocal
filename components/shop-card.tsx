@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { markdownToPlainText } from "@/lib/shop-description";
+import { FavoriteButton } from "@/components/favorite-button";
 export type ShopCardShop = {
   id: string;
   name: string;
@@ -113,6 +114,7 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
                 {shop.name.slice(0, 1).toUpperCase()}
               </span>
             )}
+            <FavoriteButton shopId={shop.id} className="absolute top-2 right-2" />
           </div>
           <CardHeader className="space-y-1 pb-2 pt-3">
             <CardTitle className="line-clamp-2 text-center text-lg leading-snug text-zinc-900 dark:text-zinc-100">
@@ -179,7 +181,8 @@ export function ShopCard({ shop, variant = "default" }: ShopCardProps) {
               {shop.name.slice(0, 1).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <CardTitle className="line-clamp-1 text-zinc-900 dark:text-zinc-100">{shop.name}</CardTitle>
+          <CardTitle className="line-clamp-1 flex-1 text-zinc-900 dark:text-zinc-100">{shop.name}</CardTitle>
+          <FavoriteButton shopId={shop.id} />
         </div>
         <CardDescription className="line-clamp-2 min-h-[2.5rem] text-zinc-600 dark:text-zinc-400">
           {shortDescription(shop.description)}

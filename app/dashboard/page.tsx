@@ -18,6 +18,8 @@ import { PLAN_LABELS } from "@/lib/admin";
 import { parseListingImageUrls } from "@/lib/listing-display";
 import { ShopDescription } from "@/components/shop-description";
 import { canShopPlanUseFlyers, getShopFlyerLimitByPlan } from "@/lib/shop-flyers";
+import { ShopCard, type ShopCardShop } from "@/components/shop-card";
+import { Heart } from "lucide-react";
 
 const brandSans = Poppins({
   subsets: ["latin"],
@@ -46,6 +48,43 @@ function saludoNombreUsuario(user: {
   if (oauthName) return oauthName;
 
   return user.email || "Usuario";
+}
+
+function FavoritesSection({ shops }: { shops: ShopCardShop[] }) {
+  return (
+    <Card className="border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <CardHeader className="space-y-1">
+        <div className="flex items-center gap-2">
+          <Heart className="size-5 text-rose-500" />
+          <CardTitle className="text-xl text-slate-900 dark:text-zinc-100">Mis Favoritos</CardTitle>
+        </div>
+        <CardDescription className="text-slate-700 dark:text-zinc-300">
+          Comercios que guardaste para volver a ver.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {shops.length === 0 ? (
+          <p className="text-sm text-slate-600 dark:text-zinc-400">
+            Todavía no guardaste ningún comercio. Explorá el{" "}
+            <Link href="/" className="text-emerald-600 underline underline-offset-2 hover:text-emerald-700 dark:text-emerald-400">
+              directorio
+            </Link>{" "}
+            o el{" "}
+            <Link href="/mapa" className="text-emerald-600 underline underline-offset-2 hover:text-emerald-700 dark:text-emerald-400">
+              mapa
+            </Link>{" "}
+            y guardá los que te interesen.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {shops.map((shop) => (
+              <ShopCard key={shop.id} shop={shop} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 type DashboardPageProps = {
@@ -78,6 +117,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   if (shopError) {
     console.error("[dashboard] shop query:", shopError.message);
   }
+
+  const { data: favoritesRaw } = await supabase
+    .from("favorites")
+    .select("shop:shop_id(id, name, slug, description, logo_url, whatsapp_number, plan_type)")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  const favoriteShops: ShopCardShop[] = (favoritesRaw ?? [])
+    .map((f) => f.shop as ShopCardShop | null)
+    .filter((s): s is ShopCardShop => s !== null);
 
   if (!shop) {
     return (
@@ -150,6 +199,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </Button>
             </CardContent>
           </Card>
+
+          <FavoritesSection shops={favoriteShops} />
 
           <form action={signOutAndRedirect} className="pt-2">
             <Button
@@ -380,6 +431,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </Card>
 
           <CatalogManager listings={(listings ?? []) as ListingItem[]} />
+
+          <FavoritesSection shops={favoriteShops} />
         </div>
 
         <form action={signOutAndRedirect} className="pt-2">
