@@ -64,30 +64,39 @@ export function CatalogManager({ listings, shopCategoryId, shopSubcategoryId, sh
   };
 
   return (
-    <Card className="border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-      <CardHeader>
-        <CardTitle className="text-xl font-bold text-slate-900 dark:text-zinc-100">Mi Catalogo</CardTitle>
-        <CardDescription className="text-slate-700 dark:text-zinc-300">
-          Agrega productos o servicios para mostrar en tu pagina publica.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <ListingForm
-          mode="create"
-          fileInputId="listing-catalog-images"
-          shopCategoryId={shopCategoryId}
-          shopSubcategoryId={shopSubcategoryId}
-          shopBusinessType={shopBusinessType}
-          taxonomy={taxonomy}
-        />
+    <div className="space-y-6">
+      <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100">Mi Catálogo</h2>
 
-        {deleteError ? <p className="text-sm text-red-600">{deleteError}</p> : null}
+      <Card className="border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-slate-800 dark:text-zinc-200">Agregar nuevo item</CardTitle>
+          <CardDescription className="text-slate-700 dark:text-zinc-300">
+            Completá los datos y publicá en tu página pública.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ListingForm
+            mode="create"
+            fileInputId="listing-catalog-images"
+            shopCategoryId={shopCategoryId}
+            shopSubcategoryId={shopSubcategoryId}
+            shopBusinessType={shopBusinessType}
+            taxonomy={taxonomy}
+          />
+        </CardContent>
+      </Card>
 
-        <div className="space-y-3">
-          {listings.length === 0 ? (
-            <p className="text-sm text-slate-700 dark:text-zinc-300">Todavia no agregaste items al catalogo.</p>
-          ) : (
-            listings.map((item) => {
+      {deleteError ? <p className="text-sm text-red-600">{deleteError}</p> : null}
+
+      <div className="space-y-3">
+        {listings.length === 0 ? (
+          <p className="text-sm text-slate-500 dark:text-zinc-400">Todavía no agregaste items al catálogo.</p>
+        ) : (
+          <>
+            <h3 className="text-base font-semibold text-slate-800 dark:text-zinc-200">
+              Items publicados ({listings.length})
+            </h3>
+            {listings.map((item) => {
               const imgs = parseListingImageUrls(item.image_urls);
               const priceVal = toNum(item.price);
               const disc =
@@ -105,7 +114,7 @@ export function CatalogManager({ listings, shopCategoryId, shopSubcategoryId, sh
                 <Card
                   key={item.id}
                   className={cn(
-                    "relative overflow-hidden",
+                    "relative overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-md",
                     item.is_promoted
                       ? "border-2 border-emerald-600 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-900/20"
                       : "border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900",
@@ -194,10 +203,10 @@ export function CatalogManager({ listings, shopCategoryId, shopSubcategoryId, sh
                   </CardContent>
                 </Card>
               );
-            })
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            })}
+          </>
+        )}
+      </div>
+    </div>
   );
 }

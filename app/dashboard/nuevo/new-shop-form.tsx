@@ -55,6 +55,7 @@ const schema = z.object({
   business_type: z.enum(["producto", "servicio"]),
   category_id: z.string(),
   subcategory_id: z.string(),
+  subcategory_note: z.string().max(150).optional(),
   whatsapp: z.string().min(6, "Ingresa un WhatsApp valido."),
   instagram: z.string().max(100, "Instagram: maximo 100 caracteres."),
   description: z
@@ -92,7 +93,7 @@ function FlyerFilePreview({ file, className }: { file: File; className?: string 
 }
 
 type InitialFieldValues = Partial<
-  Pick<FormValues, "name" | "whatsapp" | "description" | "instagram">
+  Pick<FormValues, "name" | "whatsapp" | "description" | "instagram" | "subcategory_note">
 >;
 
 function resolveInitialBusinessType(
@@ -173,6 +174,7 @@ export function NewShopForm({
       /** Siempre string (nunca undefined) para que Radix Select sea controlado de forma estable. */
       category_id: initialCategoryId != null ? String(initialCategoryId) : "",
       subcategory_id: initialSubcategoryId != null ? String(initialSubcategoryId) : "",
+      subcategory_note: initialValues?.subcategory_note ?? "",
       whatsapp: initialValues?.whatsapp ?? "",
       instagram: initialValues?.instagram ?? "",
       description: initialValues?.description ?? "",
@@ -189,6 +191,8 @@ export function NewShopForm({
   const selectedCategory =
     categoriesForType.find((c) => c.id === categoryId) ??
     taxonomyCategories.find((c) => c.id === categoryId);
+  const selectedSubcat = taxonomySubcategories.find((s) => s.id === subcategoryId);
+  const isOtroSubcat = selectedSubcat?.name === "Otro...";
 
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
@@ -236,6 +240,7 @@ export function NewShopForm({
       formData.set("business_type", values.business_type);
       formData.set("category_id", values.category_id);
       formData.set("subcategory_id", values.subcategory_id);
+      formData.set("subcategory_note", isOtroSubcat ? (values.subcategory_note ?? "") : "");
       formData.set("whatsapp", values.whatsapp);
       formData.set("instagram", values.instagram.trim());
       formData.set("description", values.description);
@@ -497,6 +502,7 @@ export function NewShopForm({
                         value={field.value}
                         onValueChange={(v) => {
                           field.onChange(v);
+                          form.setValue("subcategory_note", "");
                           setSubcatReqSent(false);
                           setSubcatReqError(null);
                           setSubcatReqName("");
@@ -504,67 +510,40 @@ export function NewShopForm({
                       >
                         <SelectTrigger className="h-10 w-full bg-white">
                           <SelectValue placeholder="Selecciona una subcategoria">
-                            {field.value === "otro"
-                              ? "Otro / No encuentro mi subcategoría"
-                              : subcategoriesForCategory.find((s) => s.id === field.value)?.name ??
-                                taxonomySubcategories.find((s) => s.id === field.value)?.name ??
-                                null}
+                            {subcategoriesForCategory.find((s) => s.id === field.value)?.name ??
+                              taxonomySubcategories.find((s) => s.id === field.value)?.name ??
+                              null}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {subcategoriesForCategory.map((s) => (
+                          {subcategoriesForCategory.filter((s) => s.name !== "Otro...").map((s) => (
                             <SelectItem key={s.id} value={s.id}>
                               {s.name}
                             </SelectItem>
                           ))}
-                          <SelectSeparator />
-                          <SelectItem value="otro">Otro / No encuentro mi subcategoría</SelectItem>
+                          {subcategoriesForCategory.some((s) => s.name === "Otro...") && (
+                            <>
+                              <SelectSeparator />
+                              {subcategoriesForCategory.filter((s) => s.name === "Otro...").map((s) => (
+                                <SelectItem key={s.id} value={s.id}>
+                                  Otro...
+                                </SelectItem>
+                              ))}
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                     )}
                   />
-                  {subcategoryId === "otro" && (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 space-y-2">
-                      {subcatReqSent ? (
-                        <p className="text-sm text-emerald-700">Solicitud enviada. Te avisamos pronto.</p>
-                      ) : (
-                        <>
-                          <p className="text-sm font-medium text-slate-800">¿Qué subcategoría necesitás?</p>
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Ej: Pan artesanal, Pintura interior..."
-                              value={subcatReqName}
-                              onChange={(e) => setSubcatReqName(e.target.value)}
-                              className="flex-1"
-                              maxLength={100}
-                            />
-                            <Button
-                              type="button"
-                              disabled={isRequestPending || !subcatReqName.trim()}
-                              onClick={() =>
-                                startRequestTransition(async () => {
-                                  setSubcatReqError(null);
-                                  const res = await requestCategory({
-                                    requestedName: subcatReqName.trim(),
-                                    kind: "subcategory",
-                                    businessType,
-                                    parentCategoryName: selectedCategory?.name,
-                                  });
-                                  if (res.ok) setSubcatReqSent(true);
-                                  else setSubcatReqError(res.error ?? "Error al enviar.");
-                                })
-                              }
-                              className="shrink-0 bg-emerald-600 text-white hover:bg-emerald-700"
-                            >
-                              {isRequestPending ? "Enviando..." : "Solicitar"}
-                            </Button>
-                          </div>
-                          {subcatReqError && <p className="text-xs text-red-600">{subcatReqError}</p>}
-                          <p className="text-xs text-zinc-500">
-                            Podés guardar el local igual y asignar la subcategoría cuando esté disponible.
-                          </p>
-                        </>
-                      )}
+                  {isOtroSubcat && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 space-y-1.5">
+                      <p className="text-sm font-medium text-slate-800">¿A qué te referís con "otro"?</p>
+                      <Input
+                        placeholder="Ej: Herrería artística, Ropa de egresados..."
+                        maxLength={150}
+                        {...form.register("subcategory_note")}
+                      />
+                      <p className="text-xs text-zinc-500">Opcional. Nos ayuda a crear nuevas subcategorías.</p>
                     </div>
                   )}
                 </>

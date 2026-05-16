@@ -94,6 +94,7 @@ export type Database = {
           business_type: string | null;
           category_id: string | null;
           subcategory_id: string | null;
+          subcategory_note: string | null;
           whatsapp_number: string | null;
           instagram_username: string | null;
           description: string | null;
@@ -116,6 +117,7 @@ export type Database = {
           business_type?: string | null;
           category_id?: string | null;
           subcategory_id?: string | null;
+          subcategory_note?: string | null;
           whatsapp_number?: string | null;
           instagram_username?: string | null;
           description?: string | null;
@@ -138,6 +140,7 @@ export type Database = {
           business_type?: string | null;
           category_id?: string | null;
           subcategory_id?: string | null;
+          subcategory_note?: string | null;
           whatsapp_number?: string | null;
           instagram_username?: string | null;
           description?: string | null;
@@ -167,6 +170,7 @@ export type Database = {
           created_at: string;
           category_id: string | null;
           subcategory_id: string | null;
+          subcategory_note: string | null;
         };
         Insert: {
           id?: string;
@@ -181,6 +185,7 @@ export type Database = {
           created_at?: string;
           category_id?: string | null;
           subcategory_id?: string | null;
+          subcategory_note?: string | null;
         };
         Update: {
           id?: string;
@@ -195,6 +200,7 @@ export type Database = {
           created_at?: string;
           category_id?: string | null;
           subcategory_id?: string | null;
+          subcategory_note?: string | null;
         };
         Relationships: [
           {
@@ -296,6 +302,42 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [];
+      };
+      favorites: {
+        Row: {
+          id: string;
+          user_id: string;
+          shop_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          shop_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          shop_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "favorites_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "favorites_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
     Views: {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import {
   Check,
+  Gift,
   Star,
   BarChart3,
   Images,
@@ -136,6 +137,15 @@ export default function PreciosPage() {
           </p>
         </section>
 
+        <div className="mb-8 flex items-start justify-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-center sm:items-center dark:border-amber-700/40 dark:bg-amber-900/20">
+          <Gift className="mt-0.5 size-5 shrink-0 text-amber-600 sm:mt-0 dark:text-amber-400" />
+          <p className="text-sm font-medium text-amber-900 dark:text-amber-100 sm:text-base">
+            <span className="font-bold">Oferta de lanzamiento:</span>{" "}
+            los primeros 100 comercios que se registren obtienen el{" "}
+            <span className="font-bold">Plan Plata gratis el primer mes</span>.
+          </p>
+        </div>
+
         <div className="grid gap-6 md:grid-cols-3 md:items-start">
           {PLANS.map((plan) => (
             <Card
@@ -167,6 +177,12 @@ export default function PreciosPage() {
                     </span>
                   )}
                 </div>
+                {plan.popular && (
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:border-amber-700/40 dark:bg-amber-900/30 dark:text-amber-200">
+                    <Gift className="size-3" />
+                    1er mes gratis · primeros 100 comercios
+                  </div>
+                )}
                 <CardDescription className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
                   {plan.description}
                 </CardDescription>

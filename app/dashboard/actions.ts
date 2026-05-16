@@ -19,6 +19,7 @@ const newShopSchema = z.object({
   }),
   category_id: z.string().optional(),
   subcategory_id: z.string().optional(),
+  subcategory_note: z.string().max(150).optional(),
   whatsapp: z.string().min(6, "Ingresa un WhatsApp valido."),
   instagram: z.string().max(100, "Instagram: maximo 100 caracteres."),
   description: z
@@ -205,6 +206,7 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     business_type: formData.get("business_type"),
     category_id: formData.get("category_id"),
     subcategory_id: formData.get("subcategory_id"),
+    subcategory_note: String(formData.get("subcategory_note") ?? ""),
     whatsapp: formData.get("whatsapp"),
     instagram: String(formData.get("instagram") ?? ""),
     description: formData.get("description"),
@@ -417,6 +419,7 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     business_type: parsed.data.business_type,
     category_id: finalCategoryId,
     subcategory_id: finalSubcategoryId,
+    subcategory_note: finalSubcategoryId ? (parsed.data.subcategory_note?.trim() || null) : null,
     whatsapp_number: parsed.data.whatsapp,
     instagram_username,
     description: parsed.data.description,
@@ -660,8 +663,10 @@ export async function saveListing(formData: FormData): Promise<ListingActionResu
 
   const rawCategoryId = String(formData.get("category_id") ?? "").trim();
   const rawSubcategoryId = String(formData.get("subcategory_id") ?? "").trim();
+  const rawSubcategoryNote = String(formData.get("subcategory_note") ?? "").trim();
   const categoryId = rawCategoryId || null;
   const subcategoryId = rawSubcategoryId || null;
+  const subcategoryNote = subcategoryId ? (rawSubcategoryNote || null) : null;
 
   const payload = {
     title: parsed.data.title.trim(),
@@ -671,6 +676,7 @@ export async function saveListing(formData: FormData): Promise<ListingActionResu
     is_promoted: parsed.data.is_promoted,
     category_id: categoryId,
     subcategory_id: subcategoryId,
+    subcategory_note: subcategoryNote,
   };
 
   if (listingId) {

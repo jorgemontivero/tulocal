@@ -12,6 +12,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -45,6 +46,7 @@ const schema = z
     override_business_type: z.enum(["producto", "servicio"]).optional(),
     category_id: z.string().optional(),
     subcategory_id: z.string().optional(),
+    subcategory_note: z.string().max(150).optional(),
   })
   .superRefine((data, ctx) => {
     const p = parsePriceField(data.price);
@@ -103,6 +105,7 @@ export type ListingFormInitial = {
   image_urls: unknown;
   category_id: string | null;
   subcategory_id: string | null;
+  subcategory_note: string | null;
 };
 
 function priceToField(price: number | null | undefined): string {
@@ -144,6 +147,7 @@ function buildDefaultValues(listing?: ListingFormInitial, taxonomy?: ListingTaxo
     override_business_type: inferredType,
     category_id: listing.category_id ?? "",
     subcategory_id: listing.subcategory_id ?? "",
+    subcategory_note: listing.subcategory_note ?? "",
   };
 }
 
@@ -188,6 +192,8 @@ export function ListingForm({
   const existingUrls =
     mode === "edit" && listing ? parseListingImageUrls(listing.image_urls) : [];
 
+  const selectedSubcategoryId = form.watch("subcategory_id");
+
   const categoriesForType = taxonomy?.categories.filter(
     (c) => !overrideBusinessType || c.business_type === overrideBusinessType,
   ) ?? [];
@@ -195,6 +201,9 @@ export function ListingForm({
   const subcategoriesForCategory = taxonomy?.subcategories.filter(
     (s) => s.category_id === selectedCategoryId,
   ) ?? [];
+
+  const selectedSubcat = taxonomy?.subcategories.find((s) => s.id === selectedSubcategoryId);
+  const isOtroSubcat = selectedSubcat?.name === "Otro...";
 
   const onSubmit = form.handleSubmit((values) => {
     startTransition(async () => {
@@ -211,6 +220,7 @@ export function ListingForm({
       if (values.override_category) {
         fd.set("category_id", values.category_id ?? "");
         fd.set("subcategory_id", values.subcategory_id ?? "");
+        fd.set("subcategory_note", isOtroSubcat ? (values.subcategory_note ?? "") : "");
       }
       for (const file of imageFiles) {
         fd.append("images", file, file.name);
@@ -376,7 +386,10 @@ export function ListingForm({
                       <Select
                         key={`subcat-${selectedCategoryId}`}
                         value={field.value}
-                        onValueChange={field.onChange}
+                        onValueChange={(v) => {
+                          field.onChange(v);
+                          form.setValue("subcategory_note", "");
+                        }}
                       >
                         <SelectTrigger className="h-10 w-full bg-white dark:bg-zinc-800">
                           <SelectValue placeholder="Seleccioná una subcategoría">
@@ -384,13 +397,33 @@ export function ListingForm({
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {subcategoriesForCategory.map((s) => (
+                          {subcategoriesForCategory.filter((s) => s.name !== "Otro...").map((s) => (
                             <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                           ))}
+                          {subcategoriesForCategory.some((s) => s.name === "Otro...") && (
+                            <>
+                              <SelectSeparator />
+                              {subcategoriesForCategory.filter((s) => s.name === "Otro...").map((s) => (
+                                <SelectItem key={s.id} value={s.id}>Otro...</SelectItem>
+                              ))}
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                     )}
                   />
+                )}
+                {isOtroSubcat && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 space-y-1.5">
+                    <p className="text-sm font-medium text-slate-900 dark:text-zinc-100">¿A qué te referís con "otro"?</p>
+                    <Input
+                      placeholder="Ej: Herrería artística, Ropa de egresados..."
+                      maxLength={150}
+                      className="bg-white dark:bg-zinc-800"
+                      {...form.register("subcategory_note")}
+                    />
+                    <p className="text-xs text-zinc-500">Opcional. Nos ayuda a crear nuevas subcategorías.</p>
+                  </div>
                 )}
                 {form.formState.errors.subcategory_id && (
                   <p className="text-xs text-red-600">{form.formState.errors.subcategory_id.message}</p>

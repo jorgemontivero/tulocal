@@ -49,7 +49,7 @@ export default async function EditarListingPage({ params }: PageProps) {
   const [{ data: row, error }, taxonomy] = await Promise.all([
     supabase
       .from("listings")
-      .select("id,title,description,price,discount_percentage,is_promoted,image_urls,shop_id,category_id,subcategory_id")
+      .select("id,title,description,price,discount_percentage,is_promoted,image_urls,shop_id,category_id,subcategory_id,subcategory_note")
       .eq("id", id)
       .maybeSingle(),
     fetchShopTaxonomy(supabase),
@@ -69,6 +69,7 @@ export default async function EditarListingPage({ params }: PageProps) {
     image_urls: row.image_urls,
     category_id: (row.category_id as string | null) ?? null,
     subcategory_id: (row.subcategory_id as string | null) ?? null,
+    subcategory_note: (row.subcategory_note as string | null) ?? null,
   };
 
   const shopBusinessType =
