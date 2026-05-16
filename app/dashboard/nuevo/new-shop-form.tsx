@@ -21,10 +21,12 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { createShop } from "@/app/dashboard/actions";
+import { requestCategory } from "@/app/actions/request-category";
 import type { ShopTaxonomyCategory, ShopTaxonomySubcategory } from "@/lib/shop-taxonomy";
 import { cn } from "@/lib/utils";
 import {
@@ -51,8 +53,8 @@ const brandSans = Poppins({
 const schema = z.object({
   name: z.string().min(2, "Ingresa un nombre valido."),
   business_type: z.enum(["producto", "servicio"]),
-  category_id: z.string().min(1, "Selecciona una categoria."),
-  subcategory_id: z.string().min(1, "Selecciona una subcategoria."),
+  category_id: z.string(),
+  subcategory_id: z.string(),
   whatsapp: z.string().min(6, "Ingresa un WhatsApp valido."),
   instagram: z.string().max(100, "Instagram: maximo 100 caracteres."),
   description: z
@@ -141,6 +143,13 @@ export function NewShopForm({
   const [fileError, setFileError] = useState<string | null>(null);
   const [flyerError, setFlyerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isRequestPending, startRequestTransition] = useTransition();
+  const [catReqName, setCatReqName] = useState("");
+  const [catReqSent, setCatReqSent] = useState(false);
+  const [catReqError, setCatReqError] = useState<string | null>(null);
+  const [subcatReqName, setSubcatReqName] = useState("");
+  const [subcatReqSent, setSubcatReqSent] = useState(false);
+  const [subcatReqError, setSubcatReqError] = useState<string | null>(null);
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
   const maxFlyersForPlan = getShopFlyerLimitByPlan(initialPlanType);
   const canUploadFlyers = canShopPlanUseFlyers(initialPlanType);
@@ -172,20 +181,28 @@ export function NewShopForm({
 
   const businessType = form.watch("business_type");
   const categoryId = form.watch("category_id");
+  const subcategoryId = form.watch("subcategory_id");
   const newFlyerFileCount = flyerSlots.filter((s) => s.kind === "file").length;
 
   const categoriesForType = taxonomyCategories.filter((c) => c.business_type === businessType);
   const subcategoriesForCategory = taxonomySubcategories.filter((s) => s.category_id === categoryId);
+  const selectedCategory =
+    categoriesForType.find((c) => c.id === categoryId) ??
+    taxonomyCategories.find((c) => c.id === categoryId);
 
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
     setFileError(null);
     setFlyerError(null);
 
-    const sub = taxonomySubcategories.find((s) => s.id === values.subcategory_id);
-    if (!sub || sub.category_id !== values.category_id) {
-      form.setError("subcategory_id", { message: "Elegi una subcategoria valida." });
-      return;
+    const isOtherCat = !values.category_id || values.category_id === "otro";
+    const isOtherSubcat = !values.subcategory_id || values.subcategory_id === "otro";
+    if (!isOtherCat && !isOtherSubcat) {
+      const sub = taxonomySubcategories.find((s) => s.id === values.subcategory_id);
+      if (!sub || sub.category_id !== values.category_id) {
+        form.setError("subcategory_id", { message: "Elegi una subcategoria valida." });
+        return;
+      }
     }
 
     if (selectedLogo && selectedLogo.size > MAX_LOGO_SIZE_BYTES) {
@@ -349,13 +366,18 @@ export function NewShopForm({
                     onValueChange={(v) => {
                       field.onChange(v);
                       form.setValue("subcategory_id", "", { shouldValidate: false, shouldDirty: true });
+                      setCatReqSent(false);
+                      setCatReqError(null);
+                      setCatReqName("");
                     }}
                   >
                     <SelectTrigger className="h-10 w-full bg-white">
                       <SelectValue placeholder="Selecciona una categoria">
-                        {categoriesForType.find((c) => c.id === field.value)?.name ??
-                          taxonomyCategories.find((c) => c.id === field.value)?.name ??
-                          null}
+                        {field.value === "otro"
+                          ? "Otro / No encuentro mi rubro"
+                          : categoriesForType.find((c) => c.id === field.value)?.name ??
+                            taxonomyCategories.find((c) => c.id === field.value)?.name ??
+                            null}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
@@ -364,62 +386,196 @@ export function NewShopForm({
                           {c.name}
                         </SelectItem>
                       ))}
+                      <SelectSeparator />
+                      <SelectItem value="otro">Otro / No encuentro mi rubro</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
               />
+            )}
+            {categoryId === "otro" && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 space-y-2">
+                {catReqSent ? (
+                  <p className="text-sm text-emerald-700">Solicitud enviada. Te avisamos cuando esté disponible.</p>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-slate-800">¿Qué rubro necesitás?</p>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Ej: Panadería, Ferretería..."
+                        value={catReqName}
+                        onChange={(e) => setCatReqName(e.target.value)}
+                        className="flex-1"
+                        maxLength={100}
+                      />
+                      <Button
+                        type="button"
+                        disabled={isRequestPending || !catReqName.trim()}
+                        onClick={() =>
+                          startRequestTransition(async () => {
+                            setCatReqError(null);
+                            const res = await requestCategory({
+                              requestedName: catReqName.trim(),
+                              kind: "category",
+                              businessType,
+                            });
+                            if (res.ok) setCatReqSent(true);
+                            else setCatReqError(res.error ?? "Error al enviar.");
+                          })
+                        }
+                        className="shrink-0 bg-emerald-600 text-white hover:bg-emerald-700"
+                      >
+                        {isRequestPending ? "Enviando..." : "Solicitar"}
+                      </Button>
+                    </div>
+                    {catReqError && <p className="text-xs text-red-600">{catReqError}</p>}
+                    <p className="text-xs text-zinc-500">
+                      Podés guardar el local igual y asignar el rubro cuando esté disponible.
+                    </p>
+                  </>
+                )}
+              </div>
             )}
             {form.formState.errors.category_id && (
               <p className="text-xs text-red-600">{form.formState.errors.category_id.message}</p>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-slate-900">Subcategoria</label>
-            {!taxonomyCategories.length ? (
-              <div
-                className="h-10 w-full animate-pulse rounded-lg bg-zinc-200/90"
-                aria-busy
-                aria-label="Cargando subcategorias"
-              />
-            ) : !categoryId ? (
-              <p className="text-xs text-zinc-500">Primero elegí una categoria.</p>
-            ) : subcategoriesForCategory.length === 0 ? (
-              <p className="text-xs text-amber-800">No hay subcategorias para esta categoria.</p>
-            ) : (
-              <Controller
-                name="subcategory_id"
-                control={form.control}
-                render={({ field }) => (
-                  <Select
-                    key={`subcategory-${categoryId}-${subcategoriesForCategory.length}`}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger className="h-10 w-full bg-white">
-                      <SelectValue placeholder="Selecciona una subcategoria">
-                        {subcategoriesForCategory.find((s) => s.id === field.value)?.name ??
-                          taxonomySubcategories.find((s) => s.id === field.value)?.name ??
-                          null}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {subcategoriesForCategory.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            )}
-            {form.formState.errors.subcategory_id && (
-              <p className="text-xs text-red-600">
-                {form.formState.errors.subcategory_id.message}
-              </p>
-            )}
-          </div>
+          {categoryId && categoryId !== "otro" && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-900">Subcategoria</label>
+              {!taxonomyCategories.length ? (
+                <div
+                  className="h-10 w-full animate-pulse rounded-lg bg-zinc-200/90"
+                  aria-busy
+                  aria-label="Cargando subcategorias"
+                />
+              ) : subcategoriesForCategory.length === 0 ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 space-y-2">
+                  <p className="text-xs text-amber-800">No hay subcategorías para este rubro todavía.</p>
+                  <p className="text-sm font-medium text-slate-800">¿Qué subcategoría necesitás?</p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Ej: Pan artesanal, Pintura interior..."
+                      value={subcatReqName}
+                      onChange={(e) => setSubcatReqName(e.target.value)}
+                      className="flex-1"
+                      maxLength={100}
+                    />
+                    <Button
+                      type="button"
+                      disabled={isRequestPending || !subcatReqName.trim()}
+                      onClick={() =>
+                        startRequestTransition(async () => {
+                          setSubcatReqError(null);
+                          const res = await requestCategory({
+                            requestedName: subcatReqName.trim(),
+                            kind: "subcategory",
+                            businessType,
+                            parentCategoryName: selectedCategory?.name,
+                          });
+                          if (res.ok) setSubcatReqSent(true);
+                          else setSubcatReqError(res.error ?? "Error al enviar.");
+                        })
+                      }
+                      className="shrink-0 bg-emerald-600 text-white hover:bg-emerald-700"
+                    >
+                      {isRequestPending ? "Enviando..." : "Solicitar"}
+                    </Button>
+                  </div>
+                  {subcatReqSent && <p className="text-sm text-emerald-700">Solicitud enviada. Te avisamos pronto.</p>}
+                  {subcatReqError && <p className="text-xs text-red-600">{subcatReqError}</p>}
+                </div>
+              ) : (
+                <>
+                  <Controller
+                    name="subcategory_id"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Select
+                        key={`subcategory-${categoryId}-${subcategoriesForCategory.length}`}
+                        value={field.value}
+                        onValueChange={(v) => {
+                          field.onChange(v);
+                          setSubcatReqSent(false);
+                          setSubcatReqError(null);
+                          setSubcatReqName("");
+                        }}
+                      >
+                        <SelectTrigger className="h-10 w-full bg-white">
+                          <SelectValue placeholder="Selecciona una subcategoria">
+                            {field.value === "otro"
+                              ? "Otro / No encuentro mi subcategoría"
+                              : subcategoriesForCategory.find((s) => s.id === field.value)?.name ??
+                                taxonomySubcategories.find((s) => s.id === field.value)?.name ??
+                                null}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {subcategoriesForCategory.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.name}
+                            </SelectItem>
+                          ))}
+                          <SelectSeparator />
+                          <SelectItem value="otro">Otro / No encuentro mi subcategoría</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {subcategoryId === "otro" && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 space-y-2">
+                      {subcatReqSent ? (
+                        <p className="text-sm text-emerald-700">Solicitud enviada. Te avisamos pronto.</p>
+                      ) : (
+                        <>
+                          <p className="text-sm font-medium text-slate-800">¿Qué subcategoría necesitás?</p>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Ej: Pan artesanal, Pintura interior..."
+                              value={subcatReqName}
+                              onChange={(e) => setSubcatReqName(e.target.value)}
+                              className="flex-1"
+                              maxLength={100}
+                            />
+                            <Button
+                              type="button"
+                              disabled={isRequestPending || !subcatReqName.trim()}
+                              onClick={() =>
+                                startRequestTransition(async () => {
+                                  setSubcatReqError(null);
+                                  const res = await requestCategory({
+                                    requestedName: subcatReqName.trim(),
+                                    kind: "subcategory",
+                                    businessType,
+                                    parentCategoryName: selectedCategory?.name,
+                                  });
+                                  if (res.ok) setSubcatReqSent(true);
+                                  else setSubcatReqError(res.error ?? "Error al enviar.");
+                                })
+                              }
+                              className="shrink-0 bg-emerald-600 text-white hover:bg-emerald-700"
+                            >
+                              {isRequestPending ? "Enviando..." : "Solicitar"}
+                            </Button>
+                          </div>
+                          {subcatReqError && <p className="text-xs text-red-600">{subcatReqError}</p>}
+                          <p className="text-xs text-zinc-500">
+                            Podés guardar el local igual y asignar la subcategoría cuando esté disponible.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+              {form.formState.errors.subcategory_id && (
+                <p className="text-xs text-red-600">
+                  {form.formState.errors.subcategory_id.message}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-slate-900">WhatsApp</label>

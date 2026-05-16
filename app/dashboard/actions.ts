@@ -17,8 +17,8 @@ const newShopSchema = z.object({
   business_type: z.enum(["producto", "servicio"], {
     error: "Selecciona el tipo de negocio.",
   }),
-  category_id: z.uuid("Selecciona una categoria valida."),
-  subcategory_id: z.uuid("Selecciona una subcategoria valida."),
+  category_id: z.string().optional(),
+  subcategory_id: z.string().optional(),
   whatsapp: z.string().min(6, "Ingresa un WhatsApp valido."),
   instagram: z.string().max(100, "Instagram: maximo 100 caracteres."),
   description: z
@@ -335,38 +335,70 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     parsed.data.instagram?.trim().replace(/^@/, "") ?? "";
   const instagram_username = instagramUsername === "" ? null : instagramUsername;
 
-  const { data: subRow, error: subErr } = await supabase
-    .from("subcategories")
-    .select("id, name, category_id")
-    .eq("id", parsed.data.subcategory_id)
-    .maybeSingle();
+  const rawCat = (parsed.data.category_id ?? "").trim();
+  const rawSubcat = (parsed.data.subcategory_id ?? "").trim();
+  const isOtherCategory = !rawCat || rawCat === "otro";
+  const isOtherSubcategory = !rawSubcat || rawSubcat === "otro";
 
-  if (subErr || !subRow) {
-    return { ok: false, error: "La subcategoria seleccionada no es valida." };
+  let categoryLabel: string;
+  let finalCategoryId: string | null;
+  let finalSubcategoryId: string | null;
+
+  if (isOtherCategory) {
+    categoryLabel = "Sin categoría";
+    finalCategoryId = null;
+    finalSubcategoryId = null;
+  } else if (isOtherSubcategory) {
+    const { data: catRow, error: catErr } = await supabase
+      .from("categories")
+      .select("id, name, business_type")
+      .eq("id", rawCat)
+      .maybeSingle();
+
+    if (catErr || !catRow) {
+      return { ok: false, error: "La categoria seleccionada no es valida." };
+    }
+
+    if (catRow.business_type !== parsed.data.business_type) {
+      return { ok: false, error: "El tipo de negocio no coincide con la categoria elegida." };
+    }
+
+    categoryLabel = catRow.name;
+    finalCategoryId = catRow.id;
+    finalSubcategoryId = null;
+  } else {
+    const { data: subRow, error: subErr } = await supabase
+      .from("subcategories")
+      .select("id, name, category_id")
+      .eq("id", rawSubcat)
+      .maybeSingle();
+
+    if (subErr || !subRow) {
+      return { ok: false, error: "La subcategoria seleccionada no es valida." };
+    }
+
+    const { data: catRow, error: catErr } = await supabase
+      .from("categories")
+      .select("id, name, business_type")
+      .eq("id", subRow.category_id)
+      .maybeSingle();
+
+    if (catErr || !catRow) {
+      return { ok: false, error: "La categoria no es valida." };
+    }
+
+    if (catRow.id !== rawCat) {
+      return { ok: false, error: "La categoria y la subcategoria no coinciden." };
+    }
+
+    if (catRow.business_type !== parsed.data.business_type) {
+      return { ok: false, error: "El tipo de negocio no coincide con la categoria elegida." };
+    }
+
+    categoryLabel = `${catRow.name} — ${subRow.name}`;
+    finalCategoryId = catRow.id;
+    finalSubcategoryId = subRow.id;
   }
-
-  const { data: catRow, error: catErr } = await supabase
-    .from("categories")
-    .select("id, name, business_type")
-    .eq("id", subRow.category_id)
-    .maybeSingle();
-
-  if (catErr || !catRow) {
-    return { ok: false, error: "La categoria no es valida." };
-  }
-
-  if (catRow.id !== parsed.data.category_id) {
-    return { ok: false, error: "La categoria y la subcategoria no coinciden." };
-  }
-
-  if (catRow.business_type !== parsed.data.business_type) {
-    return {
-      ok: false,
-      error: "El tipo de negocio no coincide con la categoria elegida.",
-    };
-  }
-
-  const categoryLabel = `${catRow.name} — ${subRow.name}`;
 
   const locationPayload =
     omitShopLocation && existingShop
@@ -383,8 +415,8 @@ export async function createShop(formData: FormData): Promise<CreateShopResult> 
     slug,
     category: categoryLabel,
     business_type: parsed.data.business_type,
-    category_id: parsed.data.category_id,
-    subcategory_id: parsed.data.subcategory_id,
+    category_id: finalCategoryId,
+    subcategory_id: finalSubcategoryId,
     whatsapp_number: parsed.data.whatsapp,
     instagram_username,
     description: parsed.data.description,
@@ -626,12 +658,19 @@ export async function saveListing(formData: FormData): Promise<ListingActionResu
     }
   }
 
+  const rawCategoryId = String(formData.get("category_id") ?? "").trim();
+  const rawSubcategoryId = String(formData.get("subcategory_id") ?? "").trim();
+  const categoryId = rawCategoryId || null;
+  const subcategoryId = rawSubcategoryId || null;
+
   const payload = {
     title: parsed.data.title.trim(),
     description: parsed.data.description.trim(),
     price: priceValue,
     discount_percentage: discountPct,
     is_promoted: parsed.data.is_promoted,
+    category_id: categoryId,
+    subcategory_id: subcategoryId,
   };
 
   if (listingId) {

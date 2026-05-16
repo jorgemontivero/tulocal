@@ -20,9 +20,17 @@ import {
   listingShowsConsultar,
   parseListingImageUrls,
 } from "@/lib/listing-display";
-import { ListingForm, type ListingFormInitial } from "@/app/dashboard/listing-form";
+import { ListingForm, type ListingFormInitial, type ListingTaxonomy } from "@/app/dashboard/listing-form";
 
 export type ListingItem = ListingFormInitial;
+
+type CatalogManagerProps = {
+  listings: ListingItem[];
+  shopCategoryId?: string;
+  shopSubcategoryId?: string;
+  shopBusinessType?: "producto" | "servicio";
+  taxonomy?: ListingTaxonomy;
+};
 
 function formatARS(price: number): string {
   return new Intl.NumberFormat("es-AR", {
@@ -38,7 +46,7 @@ function toNum(price: number | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function CatalogManager({ listings }: { listings: ListingItem[] }) {
+export function CatalogManager({ listings, shopCategoryId, shopSubcategoryId, shopBusinessType, taxonomy }: CatalogManagerProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -64,7 +72,14 @@ export function CatalogManager({ listings }: { listings: ListingItem[] }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <ListingForm mode="create" fileInputId="listing-catalog-images" />
+        <ListingForm
+          mode="create"
+          fileInputId="listing-catalog-images"
+          shopCategoryId={shopCategoryId}
+          shopSubcategoryId={shopSubcategoryId}
+          shopBusinessType={shopBusinessType}
+          taxonomy={taxonomy}
+        />
 
         {deleteError ? <p className="text-sm text-red-600">{deleteError}</p> : null}
 

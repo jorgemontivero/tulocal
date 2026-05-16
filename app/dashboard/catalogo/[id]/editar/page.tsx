@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ListingForm, type ListingFormInitial } from "@/app/dashboard/listing-form";
 import { createClient } from "@/utils/supabase/server";
+import { fetchShopTaxonomy } from "@/lib/shop-taxonomy";
 
 const brandSans = Poppins({
   subsets: ["latin"],
@@ -37,7 +38,7 @@ export default async function EditarListingPage({ params }: PageProps) {
 
   const { data: shop } = await supabase
     .from("shops")
-    .select("id")
+    .select("id,category_id,subcategory_id,business_type")
     .eq("vendor_id", user.id)
     .maybeSingle();
 
@@ -45,13 +46,14 @@ export default async function EditarListingPage({ params }: PageProps) {
     redirect("/dashboard");
   }
 
-  const { data: row, error } = await supabase
-    .from("listings")
-    .select(
-      "id,title,description,price,discount_percentage,is_promoted,image_urls,shop_id",
-    )
-    .eq("id", id)
-    .maybeSingle();
+  const [{ data: row, error }, taxonomy] = await Promise.all([
+    supabase
+      .from("listings")
+      .select("id,title,description,price,discount_percentage,is_promoted,image_urls,shop_id,category_id,subcategory_id")
+      .eq("id", id)
+      .maybeSingle(),
+    fetchShopTaxonomy(supabase),
+  ]);
 
   if (error || !row || row.shop_id !== shop.id) {
     notFound();
@@ -65,7 +67,15 @@ export default async function EditarListingPage({ params }: PageProps) {
     discount_percentage: row.discount_percentage,
     is_promoted: row.is_promoted,
     image_urls: row.image_urls,
+    category_id: (row.category_id as string | null) ?? null,
+    subcategory_id: (row.subcategory_id as string | null) ?? null,
   };
+
+  const shopBusinessType =
+    (shop as { business_type?: string | null }).business_type === "producto" ||
+    (shop as { business_type?: string | null }).business_type === "servicio"
+      ? ((shop as { business_type?: string | null }).business_type as "producto" | "servicio")
+      : undefined;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
@@ -109,6 +119,10 @@ export default async function EditarListingPage({ params }: PageProps) {
               mode="edit"
               listing={listing}
               fileInputId="listing-edit-images"
+              shopCategoryId={(shop as { category_id?: string | null }).category_id ?? undefined}
+              shopSubcategoryId={(shop as { subcategory_id?: string | null }).subcategory_id ?? undefined}
+              shopBusinessType={shopBusinessType}
+              taxonomy={taxonomy}
             />
             <Button
               render={<Link href="/dashboard" />}

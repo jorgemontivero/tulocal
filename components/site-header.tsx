@@ -42,6 +42,7 @@ const NAV_LINKS = [
 export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
   const pathname = usePathname();
   const isLogin = pathname === "/login";
+  const isDashboard = pathname.startsWith("/dashboard");
   const showNavSearch = pathname !== "/";
   const { theme, toggleTheme } = useTheme();
 
@@ -146,7 +147,7 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
               >
                 <ThemeIcon className="size-5" />
               </button>
-              {isLoggedIn ? (
+              {isLoggedIn && !isDashboard ? (
                 <Button
                   render={<Link href="/dashboard" />}
                   className="border border-white/20 bg-white px-4 text-emerald-800 shadow-sm hover:bg-emerald-50 dark:border-emerald-300/30 dark:bg-emerald-200 dark:text-emerald-950 dark:hover:bg-emerald-100"
@@ -154,14 +155,14 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
                   <LayoutDashboard className="text-emerald-800 dark:text-emerald-950" />
                   Mi Panel
                 </Button>
-              ) : (
+              ) : !isLoggedIn ? (
                 <Button
                   render={<Link href="/login" />}
                   className="border border-white/20 bg-white px-4 text-emerald-800 shadow-sm hover:bg-emerald-50 dark:border-emerald-300/30 dark:bg-emerald-200 dark:text-emerald-950 dark:hover:bg-emerald-100"
                 >
                   Ingresar
                 </Button>
-              )}
+              ) : null}
             </div>
 
             {/* Mobile action buttons */}
@@ -265,7 +266,7 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
                 <ThemeIcon className="size-4" />
                 {isDarkMode ? "Usar modo claro" : "Usar modo oscuro"}
               </button>
-              {isLoggedIn ? (
+              {isLoggedIn && !isDashboard ? (
                 <Button
                   render={<Link href="/dashboard" onClick={closeDrawer} />}
                   className="w-full justify-center border border-white/20 bg-white text-emerald-800 shadow-sm hover:bg-emerald-50 dark:border-emerald-300/30 dark:bg-emerald-200 dark:text-emerald-950 dark:hover:bg-emerald-100"
@@ -273,14 +274,14 @@ export function SiteHeader({ isLoggedIn }: SiteHeaderProps) {
                   <LayoutDashboard className="text-emerald-800 dark:text-emerald-950" />
                   Mi Panel
                 </Button>
-              ) : (
+              ) : !isLoggedIn ? (
                 <Button
                   render={<Link href="/login" onClick={closeDrawer} />}
                   className="w-full justify-center border border-white/20 bg-white text-emerald-800 shadow-sm hover:bg-emerald-50 dark:border-emerald-300/30 dark:bg-emerald-200 dark:text-emerald-950 dark:hover:bg-emerald-100"
                 >
                   Ingresar
                 </Button>
-              )}
+              ) : null}
             </div>
           </nav>
         </div>

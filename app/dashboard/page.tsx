@@ -20,6 +20,7 @@ import { ShopDescription } from "@/components/shop-description";
 import { canShopPlanUseFlyers, getShopFlyerLimitByPlan } from "@/lib/shop-flyers";
 import { ShopCard, type ShopCardShop } from "@/components/shop-card";
 import { Heart } from "lucide-react";
+import { fetchShopTaxonomy } from "@/lib/shop-taxonomy";
 
 const brandSans = Poppins({
   subsets: ["latin"],
@@ -223,6 +224,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     logo_url?: string | null;
     slug?: string | null;
     category?: string | null;
+    category_id?: string | null;
+    subcategory_id?: string | null;
     business_type?: string | null;
     instagram_username?: string | null;
     description?: string | null;
@@ -260,13 +263,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const maxFlyersForPlan = getShopFlyerLimitByPlan(shopRow.plan_type);
   const canUseFlyers = canShopPlanUseFlyers(shopRow.plan_type);
   const flyerCount = canUseFlyers ? parseListingImageUrls(shopRow.flyer_urls).length : 0;
-  const { data: listings } = await supabase
-    .from("listings")
-    .select("id,title,description,price,discount_percentage,is_promoted,image_urls,status")
-    .eq("shop_id", shop.id)
-    .neq("status", "blocked")
-    .order("is_promoted", { ascending: false })
-    .order("created_at", { ascending: false });
+  const [{ data: listings }, taxonomy] = await Promise.all([
+    supabase
+      .from("listings")
+      .select("id,title,description,price,discount_percentage,is_promoted,image_urls,status,category_id,subcategory_id")
+      .eq("shop_id", shop.id)
+      .neq("status", "blocked")
+      .order("is_promoted", { ascending: false })
+      .order("created_at", { ascending: false }),
+    fetchShopTaxonomy(supabase),
+  ]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10 dark:bg-zinc-950">
@@ -345,7 +351,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="pb-2">
-                <Avatar size="lg" className="size-28 sm:size-32">
+                <Avatar className="size-28 sm:size-32">
                   {logoUrl && <AvatarImage src={logoUrl} alt={`Logo de ${shopRow.name}`} />}
                   <AvatarFallback className="bg-slate-100 text-3xl font-semibold text-slate-700 sm:text-4xl dark:bg-zinc-800 dark:text-zinc-200">
                     {initial}
@@ -430,7 +436,17 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </CardContent>
           </Card>
 
-          <CatalogManager listings={(listings ?? []) as ListingItem[]} />
+          <CatalogManager
+            listings={(listings ?? []) as ListingItem[]}
+            shopCategoryId={shopRow.category_id ?? undefined}
+            shopSubcategoryId={shopRow.subcategory_id ?? undefined}
+            shopBusinessType={
+              shopRow.business_type === "producto" || shopRow.business_type === "servicio"
+                ? shopRow.business_type
+                : undefined
+            }
+            taxonomy={taxonomy}
+          />
 
           <FavoritesSection shops={favoriteShops} />
         </div>

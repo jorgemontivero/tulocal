@@ -143,6 +143,7 @@ export async function loadMoreSearchListings(
     .from("listings")
     .select(
       `id, title, price, image_urls, created_at,
+       category_id, subcategory_id,
        shops ( name, slug, logo_url, business_type, category_id, subcategory_id )`,
     )
     .eq("status", "approved")
@@ -163,9 +164,11 @@ export async function loadMoreSearchListings(
     if (filtered.length >= LISTINGS_PAGE_SIZE) break;
     const sh = unwrapShopEmbed(row.shops);
     if (!sh?.slug) continue;
+    const effectiveCat = (row.category_id as string | null) ?? sh.category_id;
+    const effectiveSubcat = (row.subcategory_id as string | null) ?? sh.subcategory_id;
     if (typeFilter && sh.business_type !== typeFilter) continue;
-    if (catFilter && sh.category_id !== catFilter) continue;
-    if (subcatFilter && sh.subcategory_id !== subcatFilter) continue;
+    if (catFilter && effectiveCat !== catFilter) continue;
+    if (subcatFilter && effectiveSubcat !== subcatFilter) continue;
     filtered.push({
       id: String(row.id),
       title: String(row.title),

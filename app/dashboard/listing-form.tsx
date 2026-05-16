@@ -2,14 +2,22 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { saveListing } from "@/app/dashboard/actions";
 import { parseListingImageUrls } from "@/lib/listing-display";
+import type { ShopTaxonomyCategory, ShopTaxonomySubcategory } from "@/lib/shop-taxonomy";
 
 export const MAX_LISTING_IMAGES = 4;
 
@@ -33,6 +41,10 @@ const schema = z
     is_offer: z.boolean(),
     discount_percentage: z.string().optional(),
     is_promoted: z.boolean(),
+    override_category: z.boolean(),
+    override_business_type: z.enum(["producto", "servicio"]).optional(),
+    category_id: z.string().optional(),
+    subcategory_id: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     const p = parsePriceField(data.price);
@@ -54,6 +66,29 @@ const schema = z
         });
       }
     }
+    if (data.override_category) {
+      if (!data.override_business_type) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["override_business_type"],
+          message: "Seleccioná si es un producto o servicio.",
+        });
+      }
+      if (!data.category_id) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["category_id"],
+          message: "Seleccioná una categoría.",
+        });
+      }
+      if (!data.subcategory_id) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["subcategory_id"],
+          message: "Seleccioná una subcategoría.",
+        });
+      }
+    }
   });
 
 type FormValues = z.infer<typeof schema>;
@@ -66,6 +101,8 @@ export type ListingFormInitial = {
   discount_percentage: number | null;
   is_promoted: boolean;
   image_urls: unknown;
+  category_id: string | null;
+  subcategory_id: string | null;
 };
 
 function priceToField(price: number | null | undefined): string {
@@ -75,7 +112,7 @@ function priceToField(price: number | null | undefined): string {
   return String(n);
 }
 
-function buildDefaultValues(listing?: ListingFormInitial): FormValues {
+function buildDefaultValues(listing?: ListingFormInitial, taxonomy?: ListingTaxonomy): FormValues {
   if (!listing) {
     return {
       title: "",
@@ -84,10 +121,18 @@ function buildDefaultValues(listing?: ListingFormInitial): FormValues {
       is_offer: false,
       discount_percentage: "",
       is_promoted: false,
+      override_category: false,
+      override_business_type: undefined,
+      category_id: "",
+      subcategory_id: "",
     };
   }
   const disc = listing.discount_percentage;
   const hasOffer = disc != null && Number(disc) > 0;
+  const hasOverride = !!(listing.category_id || listing.subcategory_id);
+  const inferredType = listing.category_id
+    ? (taxonomy?.categories.find((c) => c.id === listing.category_id)?.business_type as "producto" | "servicio" | undefined)
+    : undefined;
   return {
     title: listing.title,
     description: listing.description ?? "",
@@ -95,28 +140,61 @@ function buildDefaultValues(listing?: ListingFormInitial): FormValues {
     is_offer: hasOffer,
     discount_percentage: hasOffer ? String(disc) : "",
     is_promoted: listing.is_promoted,
+    override_category: hasOverride,
+    override_business_type: inferredType,
+    category_id: listing.category_id ?? "",
+    subcategory_id: listing.subcategory_id ?? "",
   };
 }
+
+export type ListingTaxonomy = {
+  categories: ShopTaxonomyCategory[];
+  subcategories: ShopTaxonomySubcategory[];
+};
 
 type ListingFormProps = {
   mode: "create" | "edit";
   listing?: ListingFormInitial;
   fileInputId?: string;
+  shopCategoryId?: string;
+  shopSubcategoryId?: string;
+  shopBusinessType?: "producto" | "servicio";
+  taxonomy?: ListingTaxonomy;
 };
 
-export function ListingForm({ mode, listing, fileInputId = "listing-form-images" }: ListingFormProps) {
+export function ListingForm({
+  mode,
+  listing,
+  fileInputId = "listing-form-images",
+  shopCategoryId,
+  shopSubcategoryId,
+  shopBusinessType,
+  taxonomy,
+}: ListingFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: buildDefaultValues(listing),
+    defaultValues: buildDefaultValues(listing, taxonomy),
   });
 
   const isOffer = form.watch("is_offer");
+  const overrideCategory = form.watch("override_category");
+  const overrideBusinessType = form.watch("override_business_type");
+  const selectedCategoryId = form.watch("category_id");
+
   const existingUrls =
     mode === "edit" && listing ? parseListingImageUrls(listing.image_urls) : [];
+
+  const categoriesForType = taxonomy?.categories.filter(
+    (c) => !overrideBusinessType || c.business_type === overrideBusinessType,
+  ) ?? [];
+
+  const subcategoriesForCategory = taxonomy?.subcategories.filter(
+    (s) => s.category_id === selectedCategoryId,
+  ) ?? [];
 
   const onSubmit = form.handleSubmit((values) => {
     startTransition(async () => {
@@ -130,6 +208,10 @@ export function ListingForm({ mode, listing, fileInputId = "listing-form-images"
       if (values.is_offer) fd.set("is_offer", "on");
       fd.set("discount_percentage", values.discount_percentage ?? "");
       if (values.is_promoted) fd.set("is_promoted", "on");
+      if (values.override_category) {
+        fd.set("category_id", values.category_id ?? "");
+        fd.set("subcategory_id", values.subcategory_id ?? "");
+      }
       for (const file of imageFiles) {
         fd.append("images", file, file.name);
       }
@@ -192,6 +274,132 @@ export function ListingForm({ mode, listing, fileInputId = "listing-form-images"
           <p className="text-xs text-red-600">{form.formState.errors.description.message}</p>
         )}
       </div>
+
+      {/* Override de categoría — solo si hay taxonomía disponible */}
+      {taxonomy && taxonomy.categories.length > 0 && (
+        <>
+          <label className="flex cursor-pointer items-center gap-2 sm:col-span-2">
+            <input
+              type="checkbox"
+              className="size-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-600"
+              {...form.register("override_category", {
+                onChange: () => {
+                  form.setValue("override_business_type", shopBusinessType, { shouldValidate: false });
+                  form.setValue("category_id", "", { shouldValidate: false });
+                  form.setValue("subcategory_id", "", { shouldValidate: false });
+                },
+              })}
+            />
+            <span className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
+              Asignar categoría diferente al local
+            </span>
+          </label>
+
+          {overrideCategory && (
+            <>
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Tipo de item</label>
+                <Controller
+                  name="override_business_type"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ?? ""}
+                      onValueChange={(v) => {
+                        field.onChange(v as "producto" | "servicio");
+                        form.setValue("category_id", "", { shouldValidate: false, shouldDirty: true });
+                        form.setValue("subcategory_id", "", { shouldValidate: false, shouldDirty: true });
+                      }}
+                    >
+                      <SelectTrigger className="h-10 w-full bg-white dark:bg-zinc-800">
+                        <SelectValue placeholder="¿Es un producto o servicio?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="producto">Producto</SelectItem>
+                        <SelectItem value="servicio">Servicio</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {form.formState.errors.override_business_type && (
+                  <p className="text-xs text-red-600">{form.formState.errors.override_business_type.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Categoría</label>
+                {!overrideBusinessType ? (
+                  <p className="text-xs text-zinc-500">Primero elegí si es producto o servicio.</p>
+                ) : (
+                <Controller
+                  name="category_id"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select
+                      key={`cat-${overrideBusinessType}`}
+                      value={field.value}
+                      onValueChange={(v) => {
+                        field.onChange(v);
+                        form.setValue("subcategory_id", "", { shouldValidate: false, shouldDirty: true });
+                      }}
+                    >
+                      <SelectTrigger className="h-10 w-full bg-white dark:bg-zinc-800">
+                        <SelectValue placeholder="Seleccioná una categoría">
+                          {categoriesForType.find((c) => c.id === field.value)?.name ?? null}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoriesForType.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                )}
+                {form.formState.errors.category_id && (
+                  <p className="text-xs text-red-600">{form.formState.errors.category_id.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Subcategoría</label>
+                {!selectedCategoryId ? (
+                  <p className="text-xs text-zinc-500">Primero elegí una categoría.</p>
+                ) : subcategoriesForCategory.length === 0 ? (
+                  <p className="text-xs text-amber-800">No hay subcategorías para esta categoría.</p>
+                ) : (
+                  <Controller
+                    name="subcategory_id"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Select
+                        key={`subcat-${selectedCategoryId}`}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger className="h-10 w-full bg-white dark:bg-zinc-800">
+                          <SelectValue placeholder="Seleccioná una subcategoría">
+                            {subcategoriesForCategory.find((s) => s.id === field.value)?.name ?? null}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {subcategoriesForCategory.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                )}
+                {form.formState.errors.subcategory_id && (
+                  <p className="text-xs text-red-600">{form.formState.errors.subcategory_id.message}</p>
+                )}
+              </div>
+            </>
+          )}
+        </>
+      )}
 
       <div className="space-y-1.5 sm:col-span-2">
         <label className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Precio (ARS) - Opcional</label>
